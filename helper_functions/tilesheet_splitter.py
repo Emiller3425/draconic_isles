@@ -2,10 +2,10 @@ from PIL import Image
 import os
 
 # Directory containing the tilesheet file
-directory = '../graphics/spritesheet_images/tree'
+directory = '../graphics/levels/test_level'
 
 # Path to the tilesheet file
-tilesheet_path = os.path.join(directory, '0.png')
+tilesheet_path = os.path.join(directory, 'tilesheet.png')
 
 # Directory to save the individual tiles
 output_directory = '.'
