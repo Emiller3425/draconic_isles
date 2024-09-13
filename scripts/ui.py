@@ -1,7 +1,7 @@
 import pygame
 
 class UI:
-    def __init__(self, game, player, 
+    def __init__(self, game, player, equipped_player_melee, equipped_player_spell,
                  base_position=(10, 0), base_size=(100, 50), 
                  player_attribute_bar_positions=None, player_attribute_bar_sizes=None):
         self.game = game
@@ -13,6 +13,9 @@ class UI:
         self.minor_enemy_health_bar_image = game.assets['minor_enemy_health_bar']
         self.equipped_melee_card = game.assets['equipped_melee_card']
         self.equipped_spell_card = game.assets['equipped_spell_card']
+        self.equipped_player_melee = equipped_player_melee
+        self.equipped_player_spell = equipped_player_spell
+
 
         # Define the colors for each attribute bar
         self.player_attribute_bar_colors = {
@@ -117,17 +120,40 @@ class UI:
 
     def render_equipped_cards(self, surf):
         # Get the screen size to position the cards at the bottom left corner
-        screen_width, screen_height = surf.get_size()
+        _, screen_height = surf.get_size()
 
         # Determine the positions for the melee and spell cards
         melee_card_position = (5, screen_height - self.equipped_melee_card.get_height() - 5)
-        spell_card_position = (melee_card_position[0] + self.equipped_melee_card.get_width(), melee_card_position[1])
+        spell_card_position = (melee_card_position[0] + self.equipped_melee_card.get_width() + 2, melee_card_position[1])
 
-        # Render the equipped melee card
+        # Render the equipped melee card background
         surf.blit(self.equipped_melee_card, melee_card_position)
 
-        # Render the equipped spell card
+        # Render the equipped melee weapon on top of the melee card
+        if self.equipped_player_melee:
+            melee_image = self.game.assets.get(self.equipped_player_melee)
+            if melee_image:
+                # Center the melee weapon image on the melee card
+                melee_image_position = (
+                    melee_card_position[0] + (self.equipped_melee_card.get_width() - melee_image.get_width()) // 2,
+                    melee_card_position[1] + (self.equipped_melee_card.get_height() - melee_image.get_height()) // 2
+                )
+                surf.blit(melee_image, melee_image_position)
+
+        # Render the equipped spell card background
         surf.blit(self.equipped_spell_card, spell_card_position)
+
+        # Render the equipped spell on top of the spell card
+        if self.equipped_player_spell:
+            spell_image = self.game.assets.get(self.equipped_player_spell)
+            if spell_image:
+                # Center the spell image on the spell card
+                spell_image_position = (
+                    spell_card_position[0] + (self.equipped_spell_card.get_width() - spell_image.get_width()) // 2,
+                    spell_card_position[1] + (self.equipped_spell_card.get_height() - spell_image.get_height()) // 2
+                )
+                surf.blit(spell_image, spell_image_position)
+
 
     def render_boss_health_bar(self, surf, boss):
         # TODO Implement boss health bar rendering when we get here hopefully by thanksgiving

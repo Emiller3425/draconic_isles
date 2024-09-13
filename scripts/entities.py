@@ -3,6 +3,7 @@ import random
 import asyncio
 import sys
 from scripts.tilemap import Tilemap
+from scripts.projectile import Projectile
 
 
 class PhysicsEntity:
@@ -130,6 +131,8 @@ class Player(PhysicsEntity):
         self.max_mana = 100
         self.melee_hitbox = None
         self.image = self.game.assets['player']
+        self.equipped_melee = 'starting_sword'
+        self.equipped_spell = None
 
         self.attack_cooldowns = {
             'melee': {'current': 0, 'max': 60},  # Example: Melee attack has a 60-frame cooldown

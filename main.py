@@ -9,6 +9,7 @@ from scripts.particle import Particle
 from scripts.lantern import Lantern
 from scripts.ui import UI
 from scripts.rain import Rain, Raindrops
+from scripts.projectile import Projectile
 
 
 class Game:
@@ -48,6 +49,7 @@ class Game:
             'minor_enemy_health_bar': load_image('ui/minor_enemy_health_bar.png'),
             'equipped_melee_card' : load_image('ui/equipped_melee_card.png'),
             'equipped_spell_card' : load_image('ui/equipped_spell_card.png'),
+            'starting_sword' : load_image('weapons/swords/starting_sword.png'),
         }
 
 
@@ -85,7 +87,7 @@ class Game:
         for pos in self.tilemap.enemy_positions:
             self.enemies.append(Enemy(self, (pos[0] * self.tilemap.tile_size, pos[1] * self.tilemap.tile_size), (16, 6)))
 
-        self.ui = UI(self, self.player)
+        self.ui = UI(self, self.player, self.player.equipped_melee, self.player.equipped_spell)
 
         # Get all lanterns
         self.lanterns = []
