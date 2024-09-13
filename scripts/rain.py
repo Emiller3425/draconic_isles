@@ -21,7 +21,7 @@ class Raindrops:
         self.raindrops = []
 
         for i in range(count):
-            self.raindrops.append(Rain((random.random() * 99999, random.random() * 99999), random.choice(rain_imgs), -6, random.random() * 0.6 + 0.2))
+            self.raindrops.append(Rain((random.random() * 99999, random.random() * 99999), random.choice(rain_imgs), -5, random.random() * 0.6 + 0.2))
 
         self.raindrops.sort(key=lambda x: x.depth)
 

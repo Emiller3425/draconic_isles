@@ -70,6 +70,29 @@ class PhysicsEntity:
                 self.set_action('idle_horizontal')
         
         self.animation.update()
+
+    def die(self):
+        # Because each entity type is in a different data structure, we need to handle this in the child class
+        pass
+    
+    def melee(self):
+        # Melee attack
+        self.melee_attack = True
+        if self.is_facing == 'up':
+            #self.set_action('melee_up')
+            self.melee_hitbox = pygame.Rect(self.pos[0]+4, self.pos[1] - 14, 8, 18)
+        elif self.is_facing == 'down':
+            #self.set_action('melee_down')
+            self.melee_hitbox = pygame.Rect(self.pos[0]+4, self.pos[1] + 4, 8, 18)
+        elif self.is_facing == 'left':
+            self.melee_hitbox = pygame.Rect(self.pos[0]-14, self.pos[1], 18, 8)
+            #self.set_action('melee_horizontal')
+        elif self.is_facing == 'right':
+            self.melee_hitbox = pygame.Rect(self.pos[0]+12, self.pos[1], 18, 8)
+            #self.set_action('melee_horizontal')
+        if self.melee_attack == True:
+            self.can_attack = True
+            
         
     def handle_collisions(self, direction):
         entity_rect = self.rect()
@@ -105,12 +128,40 @@ class Player(PhysicsEntity):
         self.max_stamina = 100
         self.mana = 100
         self.max_mana = 100
+        self.melee_hitbox = None
         self.image = self.game.assets['player']
+
+        self.attack_cooldowns = {
+            'melee': {'current': 0, 'max': 60},  # Example: Melee attack has a 60-frame cooldown
+            # Add more attacks here in the future, e.g., 'ranged': {'current': 0, 'max': 120}
+        }
 
 
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
-
         super().update(movement_x, movement_y)  # Update position based on movement
+        for attack in self.attack_cooldowns:
+            if self.attack_cooldowns[attack]['current'] > 0:
+                self.attack_cooldowns[attack]['current'] -= 1
+        
+        if self.health <= 0:
+            self.die()
+
+    def die(self):
+        # TODO Implement player death
+        pass
+
+    def melee(self):
+        # Check if the melee attack cooldown is finished
+        if self.attack_cooldowns['melee']['current'] == 0:
+            super().melee()
+            
+            # Check for collision with enemies
+            for enemy in self.game.enemies:
+                if self.melee_hitbox and self.melee_hitbox.colliderect(enemy.rect()):
+                    enemy.health -= 10
+
+            # Start the cooldown timer after performing a melee attack
+            self.attack_cooldowns['melee']['current'] = self.attack_cooldowns['melee']['max']
 
     # Override the render method and add custom offset for player sprite
     def render(self, surf, offset=(0, 0)):
@@ -128,6 +179,16 @@ class Player(PhysicsEntity):
                   (self.pos[0] - offset[0] + self.anim_offset[0],
                    self.pos[1] - offset[1] + self.anim_offset[1]-6))
         
+        # RENDER MELEE HITBOX
+        if self.melee_hitbox != None:
+            melee_hitbox_color = (0, 255, 0)  # Green color for the melee hitbox
+            pygame.draw.rect(surf, melee_hitbox_color, 
+                             pygame.Rect(self.melee_hitbox.x - offset[0], 
+                                         self.melee_hitbox.y - offset[1], 
+                                         self.melee_hitbox.width, 
+                                         self.melee_hitbox.height), 1)
+        
+        
 class Enemy(PhysicsEntity):
     def __init__(self, game, pos, size):
         super().__init__(game, 'skeleton', pos, size)
@@ -141,6 +202,17 @@ class Enemy(PhysicsEntity):
 
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
         super().update(movement_x, movement_y)
+        if self.health <= 0:
+            self.die()
+
+    def die(self):
+        self.game.enemies.remove(self)
+    
+    def melee(self):
+        # TODO Implement enemy melee attack
+        super().melee(1, 1)
+        if self.game.player.rect().colliderect(self.melee_hitbox):
+            self.game.player.health -= 10
 
     def render(self, surf, offset=(0, 0)):
         # Draw the hitbox (rectangle) first
@@ -156,3 +228,6 @@ class Enemy(PhysicsEntity):
             pygame.transform.flip(self.animation.img(), self.flip, False),
                   (self.pos[0] - offset[0] + self.anim_offset[0],
                    self.pos[1] - offset[1] + self.anim_offset[1]-6))
+        
+        
+
