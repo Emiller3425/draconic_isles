@@ -3,7 +3,7 @@ import random
 import asyncio
 import sys
 from scripts.tilemap import Tilemap
-from scripts.projectile import Projectile
+from scripts.projectile import Projectile, FireballSpell
 
 
 class PhysicsEntity:
@@ -131,21 +131,52 @@ class Player(PhysicsEntity):
         self.max_mana = 100
         self.melee_hitbox = None
         self.image = self.game.assets['player']
-        self.equipped_melee = 'starting_sword'
-        self.equipped_spell = None
+        self.equipped_melee = 'basic_sword'
+        self.equipped_spell = 'fireball'
+        self.spell_velocity = [0, 0]  # Default spell velocity, down because that is the default player facing direciton
+        self.is_facing = 'down'
+        self.vertical_spell = False
+        self.vertical_spell_flip = False
 
         self.attack_cooldowns = {
             'melee': {'current': 0, 'max': 60},  # Example: Melee attack has a 60-frame cooldown
-            # Add more attacks here in the future, e.g., 'ranged': {'current': 0, 'max': 120}
         }
 
+        self.spell_details = {
+            'fireball': {'mana_cost': 10, 'velocity': 2},  # Fireball costs 10 mana
+            # Add additional spells and their costs here
+        }
+
+        # Stamina recovery management
+        self.stamina_recovery_start = None  # To track when stamina recovery can begin
+        self.stamina_regen_cooldown = 2000  # 2 seconds in milliseconds
+        self.stamina_regen_rate = 1  # Regenerate 1 stamina per tick
+
+        # Mana recovery management
+        self.mana_recovery_start = None  # To track when mana recovery can begin
+        self.mana_regen_cooldown = 2000  # 2 seconds in milliseconds
+        self.mana_regen_rate = 0.02  # Regenerate 1 mana per tick
 
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
         super().update(movement_x, movement_y)  # Update position based on movement
+
+        # Decrease the cooldowns
         for attack in self.attack_cooldowns:
             if self.attack_cooldowns[attack]['current'] > 0:
                 self.attack_cooldowns[attack]['current'] -= 1
-        
+
+        # Check for stamina regeneration after 3 seconds
+        if self.stamina < self.max_stamina and self.stamina_recovery_start:
+            time_since_last_melee = pygame.time.get_ticks() - self.stamina_recovery_start
+            if time_since_last_melee >= self.stamina_regen_cooldown:
+                self.stamina = min(self.max_stamina, self.stamina + self.stamina_regen_rate)  # Regenerate 1 stamina per tick
+
+        # Mana regeneration logic
+        if self.mana < self.max_mana and self.mana_recovery_start:
+            time_since_last_spell = pygame.time.get_ticks() - self.mana_recovery_start
+            if time_since_last_spell >= self.mana_regen_cooldown:
+                self.mana = min(self.max_mana, self.mana + self.mana_regen_rate)  # Regenerate mana per tick
+
         if self.health <= 0:
             self.die()
 
@@ -154,10 +185,14 @@ class Player(PhysicsEntity):
         pass
 
     def melee(self):
-        # Check if the melee attack cooldown is finished
-        if self.attack_cooldowns['melee']['current'] == 0:
+        # Check if the melee attack cooldown is finished and if enough stamina is available
+        if self.attack_cooldowns['melee']['current'] == 0 and self.stamina >= 15:
             super().melee()
-            
+
+            # Reduce stamina by 15
+            self.stamina -= 15
+            self.stamina_recovery_start = pygame.time.get_ticks()  # Start the recovery timer
+
             # Check for collision with enemies
             for enemy in self.game.enemies:
                 if self.melee_hitbox and self.melee_hitbox.colliderect(enemy.rect()):
@@ -166,7 +201,39 @@ class Player(PhysicsEntity):
             # Start the cooldown timer after performing a melee attack
             self.attack_cooldowns['melee']['current'] = self.attack_cooldowns['melee']['max']
 
-    # Override the render method and add custom offset for player sprite
+    def cast_spell(self):
+        # Check if the player has enough mana to cast the equipped spell
+        if self.mana >= self.spell_details[self.equipped_spell]['mana_cost']:
+            if self.is_facing == 'up':
+                self.spell_velocity = [0, -self.spell_details[self.equipped_spell]['velocity']]
+                self.vertical_spell = True
+                self.vertical_spell_flip = True
+            if self.is_facing == 'down':
+                self.spell_velocity = [0, self.spell_details[self.equipped_spell]['velocity']]
+                self.vertical_spell = True
+                self.vertical_spell_flip = False
+            if self.is_facing == 'left':
+                self.spell_velocity = [-self.spell_details[self.equipped_spell]['velocity'], 0]
+                self.vertical_spell = False
+                self.vertical_spell_flip = False
+            if self.is_facing == 'right':
+                self.spell_velocity = [self.spell_details[self.equipped_spell]['velocity'], 0]
+                self.vertical_spell = False
+                self.vertical_spell_flip = False
+            if self.equipped_spell == 'fireball':
+                # Create a fireball projectile and add it to the game's projectile list
+                fireball = FireballSpell(self.game, self.pos, self.spell_velocity, self.vertical_spell, self.vertical_spell_flip)
+                self.game.projectiles.append(fireball)
+
+            # Deduct mana for casting the spell
+            self.mana -= self.spell_details[self.equipped_spell]['mana_cost']
+
+            # Start mana recovery timer
+            self.mana_recovery_start = pygame.time.get_ticks()
+
+        else:
+            print("Not enough mana to cast the spell.")
+
     def render(self, surf, offset=(0, 0)):
         # Draw the hitbox (rectangle) first
         hitbox_color = (255, 0, 0)  # Red color for the hitbox (you can change this to any color you like)
@@ -180,17 +247,17 @@ class Player(PhysicsEntity):
         surf.blit(
             pygame.transform.flip(self.animation.img(), self.flip, False),
                   (self.pos[0] - offset[0] + self.anim_offset[0],
-                   self.pos[1] - offset[1] + self.anim_offset[1]-6))
+                   self.pos[1] - offset[1] + self.anim_offset[1] - 6))
         
-        # RENDER MELEE HITBOX
-        if self.melee_hitbox != None:
+        # Render melee hitbox
+        if self.melee_hitbox is not None:
             melee_hitbox_color = (0, 255, 0)  # Green color for the melee hitbox
             pygame.draw.rect(surf, melee_hitbox_color, 
                              pygame.Rect(self.melee_hitbox.x - offset[0], 
                                          self.melee_hitbox.y - offset[1], 
                                          self.melee_hitbox.width, 
                                          self.melee_hitbox.height), 1)
-        
+   
         
 class Enemy(PhysicsEntity):
     def __init__(self, game, pos, size):
@@ -231,6 +298,3 @@ class Enemy(PhysicsEntity):
             pygame.transform.flip(self.animation.img(), self.flip, False),
                   (self.pos[0] - offset[0] + self.anim_offset[0],
                    self.pos[1] - offset[1] + self.anim_offset[1]-6))
-        
-        
-

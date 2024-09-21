@@ -63,33 +63,35 @@ class UI:
 
     def render_bar(self, surf, attribute, current, maximum):
         # Calculate the percentage to display
-        percentage = current / maximum
+        percentage = max(0, current / maximum)  # Ensure percentage is never negative
 
         # Get the bar position and size
         x, y = self.player_attribute_bar_positions[attribute]
         width, height = self.player_attribute_bar_sizes[attribute]
 
         # Draw the filled portion of the bar based on the current value
-        filled_width = int(width * percentage)
+        filled_width = max(0, int(width * percentage))
 
-        # Create a filled bar surface of the appropriate color
-        filled_bar = pygame.Surface((filled_width, height), pygame.SRCALPHA)
-        filled_bar.fill(self.player_attribute_bar_colors[attribute])
+        if filled_width > 0:
 
-        # Blit the filled portion on top of the background
-        surf.blit(filled_bar, (x, y))
+            # Create a filled bar surface of the appropriate color
+            filled_bar = pygame.Surface((filled_width, height), pygame.SRCALPHA)
+            filled_bar.fill(self.player_attribute_bar_colors[attribute])
+
+            # Blit the filled portion on top of the background
+            surf.blit(filled_bar, (x, y))
 
     def render_enemy_health_bar(self, surf, enemy, render_scroll):
         # Calculate the percentage to display
-        percentage = enemy.health / enemy.max_health
+        percentage = max(0, enemy.health / enemy.max_health)  # Ensure percentage is never negative
 
         # Define the size of the health bar within the 16x16 frame
         frame_width = 16  # Full frame size
-        bar_width, bar_height = 12, 3     # Bar inside the frame (4 pixels high, centered)
+        bar_width, bar_height = 12, 3  # Bar inside the frame (4 pixels high, centered)
 
         # Position the health bar frame slightly above the enemy
         frame_x = enemy.pos[0] - render_scroll[0] + enemy.size[0] // 2 - frame_width // 2
-        frame_y = enemy.pos[1] - render_scroll[1] - 20 # Adjust as needed for desired height above the enemy
+        frame_y = enemy.pos[1] - render_scroll[1] - 20  # Adjust as needed for desired height above the enemy
 
         # Draw the health bar background (frame)
         surf.blit(self.minor_enemy_health_bar_image, (frame_x, frame_y))
@@ -99,24 +101,22 @@ class UI:
         bar_y = frame_y + 6  # 6 pixels down to center vertically in the 16x16 frame
 
         # Draw the filled portion of the bar based on the current value
-        filled_width = int(bar_width * percentage)
+        filled_width = max(0, int(bar_width * percentage))  # Ensure filled_width is at least 0
 
-        # Create a filled bar surface of the appropriate color
-        filled_bar = pygame.Surface((filled_width, bar_height), pygame.SRCALPHA)
-        filled_bar.fill(self.minor_enemy_health_bar_color)
-
-        # Blit the filled portion on top of the background frame
-        surf.blit(filled_bar, (bar_x, bar_y))
-
-        # Draw extra pixel at each end of the filled bar
+        # Only draw the filled bar if there's a valid width to display
         if filled_width > 0:
-            # Draw the left extra pixel
-            surf.set_at((bar_x - 1, bar_y + 1), self.minor_enemy_health_bar_color)
+            # Create a filled bar surface of the appropriate color
+            filled_bar = pygame.Surface((filled_width, bar_height), pygame.SRCALPHA)
+            filled_bar.fill(self.minor_enemy_health_bar_color)
 
-        if filled_width == bar_width:
-            # Draw the right extra pixel
-            right_x = bar_x + filled_width
-            surf.set_at((right_x, bar_y + 1), self.minor_enemy_health_bar_color)
+            # Blit the filled portion on top of the background frame
+            surf.blit(filled_bar, (bar_x, bar_y))
+
+            # Draw extra pixel at each end of the filled bar
+            surf.set_at((bar_x - 1, bar_y + 1), self.minor_enemy_health_bar_color)
+            if filled_width == bar_width:
+                right_x = bar_x + filled_width
+                surf.set_at((right_x, bar_y + 1), self.minor_enemy_health_bar_color)
 
     def render_equipped_cards(self, surf):
         # Get the screen size to position the cards at the bottom left corner

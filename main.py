@@ -9,7 +9,7 @@ from scripts.particle import Particle
 from scripts.lantern import Lantern
 from scripts.ui import UI
 from scripts.rain import Rain, Raindrops
-from scripts.projectile import Projectile
+from scripts.projectile import Projectile, FireballSpell
 
 
 class Game:
@@ -17,9 +17,9 @@ class Game:
         pygame.init()
 
         pygame.display.set_caption("Draconic Isles")
-        self.screen = pygame.display.set_mode((640, 480))
+        self.screen = pygame.display.set_mode((960, 720))
         self.screen.fill((0, 0, 0))
-        self.display = pygame.Surface((320, 240), pygame.SRCALPHA)
+        self.display = pygame.Surface((480, 320), pygame.SRCALPHA)
         self.clock = pygame.time.Clock()
 
         self.movement_x = [False, False]
@@ -49,7 +49,11 @@ class Game:
             'minor_enemy_health_bar': load_image('ui/minor_enemy_health_bar.png'),
             'equipped_melee_card' : load_image('ui/equipped_melee_card.png'),
             'equipped_spell_card' : load_image('ui/equipped_spell_card.png'),
-            'starting_sword' : load_image('weapons/swords/starting_sword.png'),
+            'basic_sword' : load_image('weapons/swords/basic_sword.png'),
+            'fireball' : load_image('spells/damage/fireball/fireball.png'),
+            'fireballspell_horizontal' : Animation(load_images('spells/damage/fireball/traveling_horizontal'), img_dur=8),
+            'fireballspell_vertical' : Animation(load_images('spells/damage/fireball/traveling_vertical'), img_dur=8),
+            'fireballspell_impact' : Animation(load_images('spells/damage/fireball/impact'), img_dur=2),
         }
 
 
@@ -93,6 +97,9 @@ class Game:
         self.lanterns = []
         for lantern in self.tilemap.extract([('lantern', 0)], keep=True):
             self.lanterns.append(Lantern(self, lantern['pos']))
+
+        # Get all projectiles
+        self.projectiles = []
 
         # Main Game Loop
         while True:
@@ -152,6 +159,12 @@ class Game:
             self.night_overlay = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
             self.night_overlay.fill((0, 0, 0, 150))  # Recreate the night effect with alpha 150
 
+            for projectile in self.projectiles[:]:
+                if projectile.update():  # If the projectile should be removed
+                    self.projectiles.remove(projectile)
+                else:
+                    projectile.render(self.display, offset=render_scroll)
+
             # Render the lanterns to remove the night effect in their vicinity
             for lantern in self.lanterns:
                 lantern.render(self.night_overlay, offset=render_scroll)
@@ -190,8 +203,10 @@ class Game:
                         self.movement_y[0] = True
                     if event.key == pygame.K_DOWN:
                         self.movement_y[1] = True
-                    if event.key == pygame.K_SPACE:
+                    if event.key == pygame.K_q:
                         self.player.melee()
+                    if event.key == pygame.K_e:  # Cast fireball spell when 'E' is pressed
+                        self.player.cast_spell()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
                         self.movement_x[0] = False
