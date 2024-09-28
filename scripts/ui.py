@@ -90,15 +90,15 @@ class UI:
         bar_width, bar_height = 12, 3  # Bar inside the frame (4 pixels high, centered)
 
         # Position the health bar frame slightly above the enemy
-        frame_x = enemy.pos[0] - render_scroll[0] + enemy.size[0] // 2 - frame_width // 2
-        frame_y = enemy.pos[1] - render_scroll[1] - 20  # Adjust as needed for desired height above the enemy
+        frame_x = int(enemy.pos[0] - render_scroll[0] + enemy.size[0] // 2 - frame_width // 2)
+        frame_y = int(enemy.pos[1] - render_scroll[1] - 20)  # Adjust as needed for desired height above the enemy
 
         # Draw the health bar background (frame)
         surf.blit(self.minor_enemy_health_bar_image, (frame_x, frame_y))
 
         # Calculate the position of the filled portion within the frame
-        bar_x = frame_x + 2  # 2 pixels padding on each side of the frame
-        bar_y = frame_y + 6  # 6 pixels down to center vertically in the 16x16 frame
+        bar_x = int(frame_x + 2)  # 2 pixels padding on each side of the frame
+        bar_y = int(frame_y + 6)  # 6 pixels down to center vertically in the 16x16 frame
 
         # Draw the filled portion of the bar based on the current value
         filled_width = max(0, int(bar_width * percentage))  # Ensure filled_width is at least 0
@@ -115,7 +115,7 @@ class UI:
             # Draw extra pixel at each end of the filled bar
             surf.set_at((bar_x - 1, bar_y + 1), self.minor_enemy_health_bar_color)
             if filled_width == bar_width:
-                right_x = bar_x + filled_width
+                right_x = int(bar_x + filled_width)
                 surf.set_at((right_x, bar_y + 1), self.minor_enemy_health_bar_color)
 
     def render_equipped_cards(self, surf):

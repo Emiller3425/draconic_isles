@@ -6,10 +6,11 @@ from scripts.entities import PhysicsEntity, Player, Enemy
 from scripts.utils import load_image, load_images, Animation
 from scripts.tilemap import Tilemap
 from scripts.particle import Particle
-from scripts.lantern import Lantern
+from scripts.light import Light
 from scripts.ui import UI
-from scripts.rain import Rain, Raindrops
+from scripts.precipitation import Precipitation, Raindrops
 from scripts.projectile import Projectile, FireballSpell
+from scripts.weather import Weather
 
 
 class Game:
@@ -17,9 +18,9 @@ class Game:
         pygame.init()
 
         pygame.display.set_caption("Draconic Isles")
-        self.screen = pygame.display.set_mode((960, 720))
+        self.screen = pygame.display.set_mode((720, 600))
         self.screen.fill((0, 0, 0))
-        self.display = pygame.Surface((480, 320), pygame.SRCALPHA)
+        self.display = pygame.Surface((360, 280), pygame.SRCALPHA)
         self.clock = pygame.time.Clock()
 
         self.movement_x = [False, False]
@@ -30,7 +31,7 @@ class Game:
             'skeleton': load_image('skeleton/skeleton.png'),
             'walls': load_images('walls/'),
             'ground': load_images('ground/'),
-            'lantern': load_images('lantern/'),
+            'light': load_images('light/'),
             'tree': load_images('tree/'),
             'bush': load_images('bush/'),
             'player/idle_down': Animation(load_images('player/idle/idle_down'), img_dur=25),
@@ -54,16 +55,17 @@ class Game:
             'fireballspell_horizontal' : Animation(load_images('spells/damage/fireball/traveling_horizontal'), img_dur=8),
             'fireballspell_vertical' : Animation(load_images('spells/damage/fireball/traveling_vertical'), img_dur=8),
             'fireballspell_impact' : Animation(load_images('spells/damage/fireball/impact'), img_dur=2),
+            'particles/lamp_particle': Animation(load_images('particles/lamp_particle/'), img_dur=random.randint(5, 30), loop=False),
         }
 
 
         # List for deferred rendering
         self.deferred_tiles = []
-        self.rain_particles = Raindrops(load_images('rain/'), count=140)
+        # self.rain_particles = Raindrops(load_images('rain/'), count=140)
 
-    def trigger_flash(self, duration=80):
-        self.flash_duration = duration
-        self.flash_alpha = 150  # Maximum opacity at the start
+    # def trigger_lighting(self, duration=80):
+    #     self.flash_duration = duration
+    #     self.flash_alpha = 150  # Maximum opacity at the start
 
     def main(self):
         # Initialize tilemap
@@ -74,13 +76,14 @@ class Game:
 
         # Night overlay effect
         self.night_overlay = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
-        self.night_overlay.fill((0, 0, 0, 150))  # Recreate the night effect with alpha 150
+        self.weather_system = Weather(self)
+        # self.night_overlay.fill((0, 0, 0, 150))  # Recreate the night effect with alpha 150
 
         # Flash(lightning) effect 
-        self.flash_alpha = 0  # Initial alpha value for the flash effect
-        self.flash_duration = 0  # Duration of the flash effect
-        self.flash_surface = pygame.Surface(self.display.get_size())  # Surface for the flash effect
-        self.flash_surface.fill((255, 255, 255))  # White flash effect
+        # self.flash_alpha = 0  # Initial alpha value for the flash effect
+        # self.flash_duration = 0  # Duration of the flash effect
+        # self.flash_surface = pygame.Surface(self.display.get_size())  # Surface for the flash effect
+        # self.flash_surface.fill((255, 255, 255))  # White flash effect
 
         # Initialize player
         self.player = Player(self, (self.tilemap.player_position[0] * self.tilemap.tile_size, self.tilemap.player_position[1] * self.tilemap.tile_size), (16, 6))
@@ -93,13 +96,16 @@ class Game:
 
         self.ui = UI(self, self.player, self.player.equipped_melee, self.player.equipped_spell)
 
-        # Get all lanterns
-        self.lanterns = []
-        for lantern in self.tilemap.extract([('lantern', 0)], keep=True):
-            self.lanterns.append(Lantern(self, lantern['pos']))
+        # Get all light objects
+        self.lights = []
+        self.lamp_particle_spawners = []
+        for light in self.tilemap.extract([('light', 0)], keep=True):
+            self.lights.append(Light(self, light['pos']))
+            self.lamp_particle_spawners.append(pygame.rect.Rect(light['pos'][0], light['pos'][1], 16, 16))
 
         # Get all projectiles
         self.projectiles = []
+        self.particles = []
 
         # Main Game Loop
         while True:
@@ -155,9 +161,9 @@ class Game:
             # Render deferred tiles (tree tops) to ensure they are above the player
             self.tilemap.render_deferred_tiles()
             
-            # Recreate the night overlay for this frame
-            self.night_overlay = pygame.Surface(self.display.get_size(), pygame.SRCALPHA)
-            self.night_overlay.fill((0, 0, 0, 150))  # Recreate the night effect with alpha 150
+            # update weather system
+            self.weather_system.update()
+            self.weather_system.render(self.display, offset=(0, 0))
 
             for projectile in self.projectiles[:]:
                 if projectile.update():  # If the projectile should be removed
@@ -166,28 +172,32 @@ class Game:
                     projectile.render(self.display, offset=render_scroll)
 
             # Render the lanterns to remove the night effect in their vicinity
-            for lantern in self.lanterns:
-                lantern.render(self.night_overlay, offset=render_scroll)
+            for light in self.lights:
+                light.render(self.night_overlay, offset=render_scroll)
+            
+            # TODO - Add particle behavior
+            for rect in self.lamp_particle_spawners:
+                if random.random() < 0.002:
+                    pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
+                    self.particles.append(Particle(self, 'lamp_particle', pos, velocity=[-0.15, 0.3], frame=random.randint(0, 10)))
+
+
+            # animate and render particles
+            for particle in self.particles.copy():
+                kill = particle.update()
+                particle.render(self.display, offset=render_scroll)
+                if isinstance(particle, Particle) and particle.type == 'lamp_particle':
+                    particle.pos[0] += math.sin(random.random()) * 0.3
+                    particle.pos[1] += math.sin(random.random()) * 0.3
+                if kill:
+                    self.particles.remove(particle)
+
 
             # Apply the night overlay effect after rendering everything
             self.display.blit(self.night_overlay, (0, 0))
 
-            self.rain_particles.update()
-            self.rain_particles.render(self.display, offset=render_scroll)
-
             # Render the UI on top of everything
             self.ui.render(self.display, render_scroll)
-
-            # Chance to trigger a flash effect
-            if random.random() < 0.0005:
-                self.trigger_flash()
-
-            # Update flash effect if active
-            if self.flash_duration > 0:
-                self.flash_duration -= 1
-                self.flash_alpha = max(0, int(self.flash_alpha * 0.98)) # Fade out over time
-                self.flash_surface.set_alpha(self.flash_alpha)
-                self.display.blit(self.flash_surface, (0, 0))
 
             # EVENT HANDLING
             for event in pygame.event.get():

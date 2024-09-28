@@ -5,7 +5,7 @@ NEIGHBORS_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1
 PHYSICS_TILE_TYPES = {
     'walls', 
     'bush', 
-    'lantern', 
+    'light', 
     'tree'
     }
 NON_ORDER_TILES = {
@@ -59,8 +59,9 @@ class Tilemap:
                         self.tilemap[key].append({'type': 'walls', 'variant': 4, 'pos': (x, y), 'layer': layer_index})
                     if layer.data[y][x] == 9:
                         self.tilemap[key].append({'type': 'walls', 'variant': 5, 'pos': (x, y), 'layer': layer_index})
+                # TODO Rename this layer to lights in Tiled, needs to be more general for all light sources, there will be more claseses for each light in the future
                 if layer.name == 'lantern':
-                    self.tilemap[key].append({'type': 'lantern', 'variant': 0, 'pos': (x, y), 'layer': layer_index})
+                    self.tilemap[key].append({'type': 'light', 'variant': 0, 'pos': (x, y), 'layer': layer_index})
                 if layer.name == 'bush':
                     self.tilemap[key].append({'type': 'bush', 'variant': 0, 'pos': (x, y), 'layer': layer_index})
                 if layer.name == 'tree':

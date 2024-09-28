@@ -73,53 +73,45 @@ class PhysicsEntity:
         self.animation.update()
 
     def die(self):
-        # Because each entity type is in a different data structure, we need to handle this in the child class
         pass
     
     def melee(self):
-        # Melee attack
         self.melee_attack = True
         if self.is_facing == 'up':
-            #self.set_action('melee_up')
             self.melee_hitbox = pygame.Rect(self.pos[0]+4, self.pos[1] - 14, 8, 18)
         elif self.is_facing == 'down':
-            #self.set_action('melee_down')
             self.melee_hitbox = pygame.Rect(self.pos[0]+4, self.pos[1] + 4, 8, 18)
         elif self.is_facing == 'left':
             self.melee_hitbox = pygame.Rect(self.pos[0]-14, self.pos[1], 18, 8)
-            #self.set_action('melee_horizontal')
         elif self.is_facing == 'right':
             self.melee_hitbox = pygame.Rect(self.pos[0]+12, self.pos[1], 18, 8)
-            #self.set_action('melee_horizontal')
         if self.melee_attack == True:
             self.can_attack = True
             
-        
     def handle_collisions(self, direction):
         entity_rect = self.rect()
         for rect in self.game.tilemap.physics_rects_around(self.pos, self.size):
             if entity_rect.colliderect(rect):
                 if direction == 'left':
                     self.collisions['left'] = True
-                    self.pos[0] = rect.right  # Adjust position to prevent overlap
+                    self.pos[0] = rect.right
                 elif direction == 'right':
                     self.collisions['right'] = True
-                    self.pos[0] = rect.left - self.size[0]  # Adjust position to prevent overlap
+                    self.pos[0] = rect.left - self.size[0]
                 elif direction == 'up':
                     self.collisions['up'] = True
-                    self.pos[1] = rect.bottom  # Adjust position to prevent overlap
+                    self.pos[1] = rect.bottom
                 elif direction == 'down':
                     self.collisions['down'] = True
-                    self.pos[1] = rect.top - self.size[1]  # Adjust position to prevent overlap
+                    self.pos[1] = rect.top - self.size[1]
 
     def render(self, surf, offset=(0, 0)):
-        # Draw the entity
         surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), 
                   (self.pos[0] - offset[0] + self.anim_offset[0], 
                    self.pos[1] - offset[1] + self.anim_offset[1]))
 
 
-# Class for the player character, inherits from PhysicsEntity
+# Class for the player character
 class Player(PhysicsEntity):
     def __init__(self, game, pos, size):
         super().__init__(game, 'player', pos, size)
@@ -133,76 +125,105 @@ class Player(PhysicsEntity):
         self.image = self.game.assets['player']
         self.equipped_melee = 'basic_sword'
         self.equipped_spell = 'fireball'
-        self.spell_velocity = [0, 0]  # Default spell velocity, down because that is the default player facing direciton
+        self.spell_velocity = [0, 0]
         self.is_facing = 'down'
         self.vertical_spell = False
         self.vertical_spell_flip = False
 
         self.attack_cooldowns = {
-            'melee': {'current': 0, 'max': 60},  # Example: Melee attack has a 60-frame cooldown
+            'melee': {'current': 0, 'max': 60},
         }
 
         self.spell_details = {
-            'fireball': {'mana_cost': 10, 'velocity': 2},  # Fireball costs 10 mana
-            # Add additional spells and their costs here
+            'fireball': {'mana_cost': 10, 'velocity': 2},
         }
 
-        # Stamina recovery management
-        self.stamina_recovery_start = None  # To track when stamina recovery can begin
-        self.stamina_regen_cooldown = 2000  # 2 seconds in milliseconds
-        self.stamina_regen_rate = 1  # Regenerate 1 stamina per tick
+        self.stamina_recovery_start = None
+        self.stamina_regen_cooldown = 2000
+        self.stamina_regen_rate = 1
 
-        # Mana recovery management
-        self.mana_recovery_start = None  # To track when mana recovery can begin
-        self.mana_regen_cooldown = 2000  # 2 seconds in milliseconds
-        self.mana_regen_rate = 0.02  # Regenerate 1 mana per tick
+        self.mana_recovery_start = None
+        self.mana_regen_cooldown = 2000
+        self.mana_regen_rate = 0.02
+
+        self.knockback_velocity = [0, 0]
+        self.knockback_duration = 10
+        self.knockback_remaining = 0
+        self.knockback_direction = None
 
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
-        super().update(movement_x, movement_y)  # Update position based on movement
+        if self.knockback_remaining > 0:
+            self.apply_knockback_movement()
+        else:
+            super().update(movement_x, movement_y)
 
-        # Decrease the cooldowns
         for attack in self.attack_cooldowns:
             if self.attack_cooldowns[attack]['current'] > 0:
                 self.attack_cooldowns[attack]['current'] -= 1
 
-        # Check for stamina regeneration after 3 seconds
         if self.stamina < self.max_stamina and self.stamina_recovery_start:
             time_since_last_melee = pygame.time.get_ticks() - self.stamina_recovery_start
             if time_since_last_melee >= self.stamina_regen_cooldown:
-                self.stamina = min(self.max_stamina, self.stamina + self.stamina_regen_rate)  # Regenerate 1 stamina per tick
+                self.stamina = min(self.max_stamina, self.stamina + self.stamina_regen_rate)
 
-        # Mana regeneration logic
         if self.mana < self.max_mana and self.mana_recovery_start:
             time_since_last_spell = pygame.time.get_ticks() - self.mana_recovery_start
             if time_since_last_spell >= self.mana_regen_cooldown:
-                self.mana = min(self.max_mana, self.mana + self.mana_regen_rate)  # Regenerate mana per tick
+                self.mana = min(self.max_mana, self.mana + self.mana_regen_rate)
 
         if self.health <= 0:
             self.die()
 
-    def die(self):
-        # TODO Implement player death
-        pass
+    def apply_knockback(self, knockback_vector, knockback_strength):
+        distance = max(1, (knockback_vector[0] ** 2 + knockback_vector[1] ** 2) ** 0.5)
+        normalized_vector = [knockback_vector[0] / distance, knockback_vector[1] / distance]
+
+        self.knockback_velocity = [normalized_vector[0] * knockback_strength, normalized_vector[1] * knockback_strength]
+        self.knockback_remaining = self.knockback_duration
+        self.knockback_direction = 'horizontal' if abs(self.knockback_velocity[0]) > abs(self.knockback_velocity[1]) else 'vertical'
+
+    def apply_knockback_movement(self):
+        dx, dy = self.knockback_velocity
+
+        # Separate the knockback into horizontal and vertical components
+        # Try horizontal movement first, if blocked, move vertically or vice versa
+
+        # Try moving horizontally
+        if dx != 0:
+            self.pos[0] += dx
+            if self.handle_collisions('right' if dx > 0 else 'left'):
+                # If horizontal movement is blocked, set horizontal velocity to 0
+                dx = 0
+        
+        # Try moving vertically
+        if dy != 0:
+            self.pos[1] += dy
+            if self.handle_collisions('down' if dy > 0 else 'up'):
+                # If vertical movement is blocked, set vertical velocity to 0
+                dy = 0
+
+        # If both directions are blocked, stop knockback
+        if dx == 0 and dy == 0:
+            self.knockback_remaining = 0
+
+        self.knockback_remaining -= 1
 
     def melee(self):
-        # Check if the melee attack cooldown is finished and if enough stamina is available
         if self.attack_cooldowns['melee']['current'] == 0 and self.stamina >= 15:
             super().melee()
 
-            # Reduce stamina by 15
             self.stamina -= 15
-            self.stamina_recovery_start = pygame.time.get_ticks()  # Start the recovery timer
+            self.stamina_recovery_start = pygame.time.get_ticks()
 
-            # Check for collision with enemies
             for enemy in self.game.enemies:
                 if self.melee_hitbox and self.melee_hitbox.colliderect(enemy.rect()):
                     enemy.health -= 10
+                    knockback_vector = [enemy.pos[0] - self.pos[0], enemy.pos[1] - self.pos[1]]
+                    enemy.apply_knockback(knockback_vector, knockback_strength=3)
 
-            # Start the cooldown timer after performing a melee attack
             self.attack_cooldowns['melee']['current'] = self.attack_cooldowns['melee']['max']
 
     def cast_spell(self):
-        # Check if the player has enough mana to cast the equipped spell
         if self.mana >= self.spell_details[self.equipped_spell]['mana_cost']:
             if self.is_facing == 'up':
                 self.spell_velocity = [0, -self.spell_details[self.equipped_spell]['velocity']]
@@ -221,27 +242,22 @@ class Player(PhysicsEntity):
                 self.vertical_spell = False
                 self.vertical_spell_flip = False
             if self.equipped_spell == 'fireball':
-                # Create a fireball projectile and add it to the game's projectile list
-                fireball = FireballSpell(self.game, self.pos, self.spell_velocity, self.vertical_spell, self.vertical_spell_flip)
+                fireball = FireballSpell(self.game, (self.pos[0] + 2, self.pos[1] + 2), self.spell_velocity, self.vertical_spell, self.vertical_spell_flip)
                 self.game.projectiles.append(fireball)
 
-            # Deduct mana for casting the spell
             self.mana -= self.spell_details[self.equipped_spell]['mana_cost']
-
-            # Start mana recovery timer
             self.mana_recovery_start = pygame.time.get_ticks()
 
         else:
             print("Not enough mana to cast the spell.")
 
     def render(self, surf, offset=(0, 0)):
-        # Draw the hitbox (rectangle) first
-        hitbox_color = (255, 0, 0)  # Red color for the hitbox (you can change this to any color you like)
+        hitbox_color = (255, 0, 0)
         pygame.draw.rect(
             surf, 
             hitbox_color, 
             (self.pos[0] - offset[0], self.pos[1] - offset[1], self.size[0], self.size[1]), 
-            1  # Width of 1 for the rectangle border
+            1
         )
 
         surf.blit(
@@ -249,52 +265,174 @@ class Player(PhysicsEntity):
                   (self.pos[0] - offset[0] + self.anim_offset[0],
                    self.pos[1] - offset[1] + self.anim_offset[1] - 6))
         
-        # Render melee hitbox
         if self.melee_hitbox is not None:
-            melee_hitbox_color = (0, 255, 0)  # Green color for the melee hitbox
+            melee_hitbox_color = (0, 255, 0)
             pygame.draw.rect(surf, melee_hitbox_color, 
                              pygame.Rect(self.melee_hitbox.x - offset[0], 
                                          self.melee_hitbox.y - offset[1], 
                                          self.melee_hitbox.width, 
                                          self.melee_hitbox.height), 1)
-   
-        
+
+
 class Enemy(PhysicsEntity):
     def __init__(self, game, pos, size):
         super().__init__(game, 'skeleton', pos, size)
         self.health = 25
         self.max_health = 25
-        self.stamina = 25
-        self.max_stamina = 25
-        self.mana = 25
-        self.max_mana = 25
-        self.image = self.game.assets['skeleton']
+        self.speed = 0.5
+        self.knockback_velocity = [0, 0]
+        self.knockback_duration = 10
+        self.knockback_remaining = 0
+        self.knockback_direction = None
 
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
-        super().update(movement_x, movement_y)
+        if self.knockback_remaining > 0:
+            self.apply_knockback_movement()
+        else:
+            direction_x = self.game.player.pos[0] - self.pos[0]
+            direction_y = self.game.player.pos[1] - self.pos[1]
+            distance = max(1, (direction_x ** 2 + direction_y ** 2) ** 0.5)
+
+            move_x = self.speed * (direction_x / distance)
+            move_y = self.speed * (direction_y / distance)
+
+            movement_x = [False, False]
+            movement_y = [False, False]
+
+            if abs(move_y) > 0.25:
+                if move_y < 0:
+                    movement_y[0] = abs(move_y)
+                else:
+                    movement_y[1] = abs(move_y)
+
+            if abs(move_x) > 0.25:
+                if move_x < 0:
+                    movement_x[0] = abs(move_x)
+                else:
+                    movement_x[1] = abs(move_x)
+
+            super().update(movement_x, movement_y)
+
+        if self.rect().colliderect(self.game.player.rect()):
+            self.apply_damage_to_player()
+            self.apply_knockback_to_player()
+
+        for enemy in self.game.enemies:
+            if enemy != self and self.rect().colliderect(enemy.rect()):
+                self.prevent_overlap(enemy)
+
+                # Only apply knockback to the other enemy if this enemy is currently being knocked back
+                if self.knockback_remaining > 0:
+                    self.apply_knockback_to_other_enemy(enemy)
+
         if self.health <= 0:
             self.die()
 
+    def apply_knockback(self, knockback_vector, knockback_strength):
+        distance = max(1, (knockback_vector[0] ** 2 + knockback_vector[1] ** 2) ** 0.5)
+        normalized_vector = [knockback_vector[0] / distance, knockback_vector[1] / distance]
+
+        self.knockback_velocity = [normalized_vector[0] * knockback_strength, normalized_vector[1] * knockback_strength]
+        self.knockback_remaining = self.knockback_duration
+        self.knockback_direction = 'horizontal' if abs(self.knockback_velocity[0]) > abs(self.knockback_velocity[1]) else 'vertical'
+
+    def apply_knockback_movement(self):
+        dx, dy = self.knockback_velocity
+
+        # Separate the knockback into horizontal and vertical components
+        # Try horizontal movement first, if blocked, move vertically or vice versa
+
+        # Try moving horizontally
+        if dx != 0:
+            self.pos[0] += dx
+            if self.handle_collisions('right' if dx > 0 else 'left'):
+                # If horizontal movement is blocked, set horizontal velocity to 0
+                dx = 0
+        
+        # Try moving vertically
+        if dy != 0:
+            self.pos[1] += dy
+            if self.handle_collisions('down' if dy > 0 else 'up'):
+                # If vertical movement is blocked, set vertical velocity to 0
+                dy = 0
+
+        # If both directions are blocked, stop knockback
+        if dx == 0 and dy == 0:
+            self.knockback_remaining = 0
+
+        self.knockback_remaining -= 1
+
+    def prevent_overlap(self, other_enemy):
+        """Prevent enemies from overlapping."""
+        overlap_rect = self.rect().clip(other_enemy.rect())
+
+        # Prevent overlap by adjusting positions without applying knockback
+        if overlap_rect.width > overlap_rect.height:
+            if self.pos[1] < other_enemy.pos[1]:
+                self.pos[1] -= overlap_rect.height
+            else:
+                self.pos[1] += overlap_rect.height
+        else:
+            if self.pos[0] < other_enemy.pos[0]:
+                self.pos[0] -= overlap_rect.width
+            else:
+                self.pos[0] += overlap_rect.width
+
+    def apply_knockback_to_other_enemy(self, other_enemy):
+        """Apply knockback to the other enemy during a collision, only if this enemy is being knocked back."""
+        knockback_vector = [other_enemy.pos[0] - self.pos[0], other_enemy.pos[1] - self.pos[1]]
+        knockback_strength = 2  # Adjust knockback strength for enemy-to-enemy knockback
+        other_enemy.apply_knockback(knockback_vector, knockback_strength)
+
+    def handle_collisions(self, direction):
+        entity_rect = self.rect()
+        for rect in self.game.tilemap.physics_rects_around(self.pos, self.size):
+            if entity_rect.colliderect(rect):
+                if direction == 'left':
+                    self.collisions['left'] = True
+                    self.pos[0] = rect.right
+                    return True
+                elif direction == 'right':
+                    self.collisions['right'] = True
+                    self.pos[0] = rect.left - self.size[0]
+                    return True
+                elif direction == 'up':
+                    self.collisions['up'] = True
+                    self.pos[1] = rect.bottom
+                    return True
+                elif direction == 'down':
+                    self.collisions['down'] = True
+                    self.pos[1] = rect.top - self.size[1]
+                    return True
+        return False
+
+    def apply_damage_to_player(self):
+        damage = 5
+        self.game.player.health -= damage
+
+    def apply_knockback_to_player(self):
+        knockback_strength = 3
+        dx = self.game.player.pos[0] - self.pos[0]
+        dy = self.game.player.pos[1] - self.pos[1]
+        distance = max(1, (dx ** 2 + dy ** 2) ** 0.5)
+
+        knockback_vector = [knockback_strength * (dx / distance), knockback_strength * (dy / distance)]
+        self.game.player.apply_knockback(knockback_vector, knockback_strength)
+
     def die(self):
         self.game.enemies.remove(self)
-    
-    def melee(self):
-        # TODO Implement enemy melee attack
-        super().melee(1, 1)
-        if self.game.player.rect().colliderect(self.melee_hitbox):
-            self.game.player.health -= 10
 
     def render(self, surf, offset=(0, 0)):
-        # Draw the hitbox (rectangle) first
-        hitbox_color = (255, 0, 0)  # Red color for the hitbox (you can change this to any color you like)
+        hitbox_color = (255, 0, 0)
         pygame.draw.rect(
-            surf, 
-            hitbox_color, 
-            (self.pos[0] - offset[0], self.pos[1] - offset[1], self.size[0], self.size[1]), 
-            1  # Width of 1 for the rectangle border
+            surf,
+            hitbox_color,
+            (self.pos[0] - offset[0], self.pos[1] - offset[1], self.size[0], self.size[1]),
+            1
         )
 
         surf.blit(
             pygame.transform.flip(self.animation.img(), self.flip, False),
-                  (self.pos[0] - offset[0] + self.anim_offset[0],
-                   self.pos[1] - offset[1] + self.anim_offset[1]-6))
+            (self.pos[0] - offset[0] + self.anim_offset[0],
+             self.pos[1] - offset[1] + self.anim_offset[1] - 6)
+        )
