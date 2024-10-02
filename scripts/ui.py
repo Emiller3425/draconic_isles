@@ -90,7 +90,7 @@ class UI:
         bar_width, bar_height = 12, 3  # Bar inside the frame (4 pixels high, centered)
 
         # Position the health bar frame slightly above the enemy
-        frame_x = int(enemy.pos[0] - render_scroll[0] + enemy.size[0] // 2 - frame_width // 2)
+        frame_x = int(enemy.pos[0] - render_scroll[0] + enemy.damage_hitbox[0] // 2 - frame_width // 2)
         frame_y = int(enemy.pos[1] - render_scroll[1] - 20)  # Adjust as needed for desired height above the enemy
 
         # Draw the health bar background (frame)

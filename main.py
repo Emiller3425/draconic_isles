@@ -50,12 +50,16 @@ class Game:
             'minor_enemy_health_bar': load_image('ui/minor_enemy_health_bar.png'),
             'equipped_melee_card' : load_image('ui/equipped_melee_card.png'),
             'equipped_spell_card' : load_image('ui/equipped_spell_card.png'),
-            'basic_sword' : load_image('weapons/swords/basic_sword.png'),
+            'basic_sword' : load_image('weapons/swords/basic_sword/basic_sword.png'),
+            'basic_sword_vertical' : load_image('weapons/swords/basic_sword/basic_sword_vertical.png'),
+            'basic_sword_horizontal' : load_image('weapons/swords/basic_sword/basic_sword_horizontal.png'),
             'fireball' : load_image('spells/damage/fireball/fireball.png'),
             'fireballspell_horizontal' : Animation(load_images('spells/damage/fireball/traveling_horizontal'), img_dur=8),
             'fireballspell_vertical' : Animation(load_images('spells/damage/fireball/traveling_vertical'), img_dur=8),
             'fireballspell_impact' : Animation(load_images('spells/damage/fireball/impact'), img_dur=2),
             'particles/lamp_particle': Animation(load_images('particles/lamp_particle/'), img_dur=random.randint(5, 30), loop=False),
+            'bonfire': load_image('bonfire/bonfire.png'),
+            'bonfire/fire': Animation(load_images('bonfire/animation/'), img_dur=10),
         }
 
 
@@ -86,13 +90,13 @@ class Game:
         # self.flash_surface.fill((255, 255, 255))  # White flash effect
 
         # Initialize player
-        self.player = Player(self, (self.tilemap.player_position[0] * self.tilemap.tile_size, self.tilemap.player_position[1] * self.tilemap.tile_size), (16, 6))
+        self.player = Player(self, (self.tilemap.player_position[0] * self.tilemap.tile_size, self.tilemap.player_position[1] * self.tilemap.tile_size), (16, 16), (16, 6))
         # Initialize scroll
         self.scroll = [self.tilemap.player_position[0] * self.tilemap.tile_size, self.tilemap.player_position[1] * self.tilemap.tile_size]
 
         self.enemies = []
         for pos in self.tilemap.enemy_positions:
-            self.enemies.append(Enemy(self, (pos[0] * self.tilemap.tile_size, pos[1] * self.tilemap.tile_size), (16, 6)))
+            self.enemies.append(Enemy(self, (pos[0] * self.tilemap.tile_size, pos[1] * self.tilemap.tile_size), (16, 16), (16, 6)))
 
         self.ui = UI(self, self.player, self.player.equipped_melee, self.player.equipped_spell)
 
@@ -103,14 +107,14 @@ class Game:
             self.lights.append(Light(self, light['pos']))
             self.lamp_particle_spawners.append(pygame.rect.Rect(light['pos'][0], light['pos'][1], 16, 16))
 
-        # Get all projectiles
+        # Get all projectiless
         self.projectiles = []
         self.particles = []
 
         # Main Game Loop
         while True:
-            self.scroll[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.scroll[0]) / 30
-            self.scroll[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 30
+            self.scroll[0] += (self.player.physics_rect().centerx - self.display.get_width() / 2 - self.scroll[0]) / 30
+            self.scroll[1] += (self.player.physics_rect().centery - self.display.get_height() / 2 - self.scroll[1]) / 30
             render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
             self.display.fill((0, 0, 0))
 

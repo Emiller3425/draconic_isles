@@ -29,7 +29,7 @@ class Projectile:
 
     def check_collision(self):
         for enemy in self.game.enemies:
-            if enemy.rect().colliderect(self.rect()):
+            if enemy.damage_rect().colliderect(self.rect()):
                 knockback_vector = [enemy.pos[0] - self.pos[0], enemy.pos[1] - self.pos[1]]
                 enemy.apply_knockback(knockback_vector, knockback_strength=5)
                 enemy.take_damage(10)  # Deal 10 damage to the enemy
@@ -97,20 +97,20 @@ class FireballSpell(Projectile):
 
     def check_explosion_collision(self):
         for enemy in self.game.enemies:
-            if enemy not in self.damaged_entities and enemy.rect().colliderect(self.rect()):
+            if enemy not in self.damaged_entities and enemy.damage_rect().colliderect(self.rect()):
                 # Calculate knockback based on the center of the explosion and enemy
                 explosion_center = [self.pos[0], self.pos[1]]
-                enemy_center = [enemy.pos[0] + enemy.size[0] // 2, enemy.pos[1] + enemy.size[1] // 2]
+                enemy_center = [enemy.pos[0] + enemy.damage_hitbox[0] // 2, enemy.pos[1] + enemy.damage_hitbox[1] // 2]
                 knockback_vector = [enemy_center[0] - explosion_center[0], enemy_center[1] - explosion_center[1]]
 
                 enemy.apply_knockback(knockback_vector, knockback_strength=self.knockback_strength)
                 enemy.health -= self.explosion_damage  # Explosion deals 5 damage to enemies
                 self.damaged_entities.append(enemy)
 
-        if self.game.player not in self.damaged_entities and self.game.player.rect().colliderect(self.rect()):
+        if self.game.player not in self.damaged_entities and self.game.player.damage_rect().colliderect(self.rect()):
             # Calculate knockback based on the center of the explosion and player
             explosion_center = [self.pos[0], self.pos[1]]
-            player_center = [self.game.player.pos[0] + self.game.player.size[0] // 2, self.game.player.pos[1] + self.game.player.size[1] // 2]
+            player_center = [self.game.player.pos[0] + self.game.player.damage_hitbox[0] // 2, self.game.player.pos[1] + self.game.player.damage_hitbox[1] // 2]
             knockback_vector = [player_center[0] - explosion_center[0], player_center[1] - explosion_center[1]]
 
             self.game.player.apply_knockback(knockback_vector, knockback_strength=self.knockback_strength)
@@ -119,7 +119,7 @@ class FireballSpell(Projectile):
 
     def check_collision(self):
         for enemy in self.game.enemies:
-            if enemy.rect().colliderect(self.rect()):
+            if enemy.damage_rect().colliderect(self.rect()):
                 if not self.exploding:
                     enemy.health -= self.explosion_damage  # Fireball deals 10 damage
                     # knockback_vector = [enemy.pos[0] - self.pos[0], enemy.pos[1] - self.pos[1]]
@@ -150,4 +150,4 @@ class FireballSpell(Projectile):
                    self.pos[1] - offset[1] - img.get_height() // 2))
 
         hitbox = self.rect().move(-offset[0], -offset[1])
-        pygame.draw.rect(surf, (0, 255, 0), hitbox, 1)  # Green hitbox for debugging
+        # pygame.draw.rect(surf, (0, 255, 0), hitbox, 1)  # Green hitbox for debugging

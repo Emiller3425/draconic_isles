@@ -4,14 +4,17 @@ import asyncio
 import sys
 from scripts.tilemap import Tilemap
 from scripts.projectile import Projectile, FireballSpell
+import numpy as np
 
 
 class PhysicsEntity:
-    def __init__(self, game, e_type, pos, size):
+    def __init__(self, game, e_type, pos, damage_hitbox, physics_hitbox):
         self.game = game
         self.type = e_type
         self.pos = list(pos)
-        self.size = size
+        self.damage_hitbox = damage_hitbox
+        self.physics_hitbox = physics_hitbox
+        self.physics_offset_y = (16 - physics_hitbox[1]) / 2
         self.velocity_x = [0, 0]
         self.velocity_y = [0, 0]
         self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
@@ -21,8 +24,13 @@ class PhysicsEntity:
         self.is_facing = 'down'
         self.set_action('idle_down')
     
-    def rect(self):
-        return pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
+    def damage_rect(self):
+        return pygame.Rect(self.pos[0], self.pos[1], self.damage_hitbox[0], self.damage_hitbox[1])
+    
+    def physics_rect(self):
+        print("physics")
+        print(self.pos[1])
+        return pygame.Rect(self.pos[0], self.pos[1] + self.physics_offset_y, self.physics_hitbox[0], self.physics_hitbox[1])
 
     def set_action(self, action):
         if action != self.action:
@@ -74,7 +82,7 @@ class PhysicsEntity:
 
     def die(self):
         pass
-    
+
     def melee(self):
         self.melee_attack = True
         if self.is_facing == 'up':
@@ -89,21 +97,22 @@ class PhysicsEntity:
             self.can_attack = True
             
     def handle_collisions(self, direction):
-        entity_rect = self.rect()
-        for rect in self.game.tilemap.physics_rects_around(self.pos, self.size):
+        entity_rect = self.physics_rect()
+        for rect in self.game.tilemap.physics_rects_around(self.pos, self.physics_hitbox):
             if entity_rect.colliderect(rect):
+                print(direction)
                 if direction == 'left':
                     self.collisions['left'] = True
                     self.pos[0] = rect.right
                 elif direction == 'right':
                     self.collisions['right'] = True
-                    self.pos[0] = rect.left - self.size[0]
+                    self.pos[0] = rect.left - self.physics_hitbox[0]
                 elif direction == 'up':
                     self.collisions['up'] = True
-                    self.pos[1] = rect.bottom
+                    self.pos[1] = rect.bottom - self.physics_offset_y
                 elif direction == 'down':
                     self.collisions['down'] = True
-                    self.pos[1] = rect.top - self.size[1]
+                    self.pos[1] = rect.top - self.physics_hitbox[1] - 1
 
     def render(self, surf, offset=(0, 0)):
         surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), 
@@ -113,8 +122,8 @@ class PhysicsEntity:
 
 # Class for the player character
 class Player(PhysicsEntity):
-    def __init__(self, game, pos, size):
-        super().__init__(game, 'player', pos, size)
+    def __init__(self, game, pos, damage_hitbox, physics_hitbox):
+        super().__init__(game, 'player', pos, damage_hitbox, physics_hitbox)
         self.health = 100
         self.max_health = 100
         self.stamina = 100
@@ -129,9 +138,11 @@ class Player(PhysicsEntity):
         self.is_facing = 'down'
         self.vertical_spell = False
         self.vertical_spell_flip = False
+        self.melee_attack_duration = 0 
+        self.is_melee_attacking = False
 
         self.attack_cooldowns = {
-            'melee': {'current': 0, 'max': 60},
+            'melee': {'current': 0, 'max': 30},
         }
 
         self.spell_details = {
@@ -150,13 +161,25 @@ class Player(PhysicsEntity):
         self.knockback_duration = 10
         self.knockback_remaining = 0
         self.knockback_direction = None
-
+    
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
+
         if self.knockback_remaining > 0:
             self.apply_knockback_movement()
-        else:
+        elif not self.is_melee_attacking:
             super().update(movement_x, movement_y)
 
+        # Update melee attack duration
+        if self.melee_hitbox is not None:
+            self.update_melee_hitbox()
+            self.melee_attack_duration -= 1
+            if self.melee_attack_duration <= 0:
+                # Reset melee hitbox after 10 frames
+                self.melee_hitbox = None
+                self.melee_attack_duration = 0
+                self.is_melee_attacking = False 
+
+        # Handle stamina and mana recovery
         for attack in self.attack_cooldowns:
             if self.attack_cooldowns[attack]['current'] > 0:
                 self.attack_cooldowns[attack]['current'] -= 1
@@ -171,6 +194,7 @@ class Player(PhysicsEntity):
             if time_since_last_spell >= self.mana_regen_cooldown:
                 self.mana = min(self.max_mana, self.mana + self.mana_regen_rate)
 
+        # Handle Death
         if self.health <= 0:
             self.die()
 
@@ -208,6 +232,18 @@ class Player(PhysicsEntity):
 
         self.knockback_remaining -= 1
 
+    def update_melee_hitbox(self):
+        """Update the melee hitbox position based on the player's current position and facing direction."""
+        if self.is_facing == 'up':
+            self.melee_hitbox = pygame.Rect(self.pos[0] + 4, self.pos[1] - 12, 8, 18)
+        elif self.is_facing == 'down':
+            self.melee_hitbox = pygame.Rect(self.pos[0] + 4, self.pos[1] + 12, 8, 18)
+        elif self.is_facing == 'left':
+            self.melee_hitbox = pygame.Rect(self.pos[0] - 14, self.pos[1] + 4, 18, 8)
+        elif self.is_facing == 'right':
+            self.melee_hitbox = pygame.Rect(self.pos[0] + 12, self.pos[1] + 4, 18, 8)
+
+
     def melee(self):
         if self.attack_cooldowns['melee']['current'] == 0 and self.stamina >= 15:
             super().melee()
@@ -215,8 +251,12 @@ class Player(PhysicsEntity):
             self.stamina -= 15
             self.stamina_recovery_start = pygame.time.get_ticks()
 
+            # Set the melee attack duration to 10 frames
+            self.melee_attack_duration = 10
+            self.is_melee_attacking = True
+
             for enemy in self.game.enemies:
-                if self.melee_hitbox and self.melee_hitbox.colliderect(enemy.rect()):
+                if self.melee_hitbox and self.melee_hitbox.colliderect(enemy.damage_rect()):
                     enemy.health -= 10
                     knockback_vector = [enemy.pos[0] - self.pos[0], enemy.pos[1] - self.pos[1]]
                     enemy.apply_knockback(knockback_vector, knockback_strength=3)
@@ -252,31 +292,68 @@ class Player(PhysicsEntity):
             print("Not enough mana to cast the spell.")
 
     def render(self, surf, offset=(0, 0)):
+
+        # Render damage hitbox
         hitbox_color = (255, 0, 0)
         pygame.draw.rect(
             surf, 
             hitbox_color, 
-            (self.pos[0] - offset[0], self.pos[1] - offset[1], self.size[0], self.size[1]), 
+            (self.pos[0] - offset[0], self.pos[1] - offset[1], self.damage_hitbox[0], self.damage_hitbox[1]), 
             1
         )
 
+        # Render physics hitbox
+        physics_hitbox_color = (0, 0, 255)
+        pygame.draw.rect(
+            surf, 
+            physics_hitbox_color, 
+            (self.pos[0] - offset[0], self.pos[1] - offset[1] + self.physics_offset_y, self.physics_hitbox[0], self.physics_hitbox[1]), 
+            1
+        )
+
+
+        # Only render the weapon if melee_hitbox is not None
+        if self.melee_hitbox is not None:
+            # Select weapon image based on facing direction
+            if self.is_facing in ['up', 'down']:
+                weapon_image = self.game.assets[self.equipped_melee + '_vertical']
+                flip_horizontally = False
+                flip_vertically = self.is_facing == 'down'  # Flip vertically if facing down
+            else:
+                weapon_image = self.game.assets[self.equipped_melee + '_horizontal']
+                flip_horizontally = self.is_facing == 'left'  # Flip horizontally if facing left
+                flip_vertically = False
+
+            # Flip the weapon image based on direction
+            weapon_image = pygame.transform.flip(weapon_image, flip_horizontally, flip_vertically)
+            
+            # Align the weapon position with the melee hitbox
+            weapon_pos = (self.melee_hitbox.x - offset[0], self.melee_hitbox.y - offset[1])
+
+            # Blit (draw) the weapon image on the surface
+            surf.blit(weapon_image, weapon_pos)
+
+        # Render the player sprite
         surf.blit(
             pygame.transform.flip(self.animation.img(), self.flip, False),
-                  (self.pos[0] - offset[0] + self.anim_offset[0],
-                   self.pos[1] - offset[1] + self.anim_offset[1] - 6))
+            (self.pos[0] - offset[0] + self.anim_offset[0],
+            self.pos[1] - offset[1] + self.anim_offset[1])
+        )
         
+        # Optionally draw the melee hitbox for debugging
         if self.melee_hitbox is not None:
             melee_hitbox_color = (0, 255, 0)
             pygame.draw.rect(surf, melee_hitbox_color, 
-                             pygame.Rect(self.melee_hitbox.x - offset[0], 
-                                         self.melee_hitbox.y - offset[1], 
-                                         self.melee_hitbox.width, 
-                                         self.melee_hitbox.height), 1)
+                            pygame.Rect(self.melee_hitbox.x - offset[0], 
+                                        self.melee_hitbox.y - offset[1], 
+                                        self.melee_hitbox.width, 
+                                        self.melee_hitbox.height), 1)
+
 
 
 class Enemy(PhysicsEntity):
-    def __init__(self, game, pos, size):
-        super().__init__(game, 'skeleton', pos, size)
+    def __init__(self, game, pos, damage_hitbox, physics_hitbox):
+        super().__init__(game, 'skeleton', pos, damage_hitbox, physics_hitbox)
         self.health = 25
         self.max_health = 25
         self.speed = 0.5
@@ -313,12 +390,12 @@ class Enemy(PhysicsEntity):
 
             super().update(movement_x, movement_y)
 
-        if self.rect().colliderect(self.game.player.rect()):
+        if self.physics_rect().colliderect(self.game.player.physics_rect()):
             self.apply_damage_to_player()
             self.apply_knockback_to_player()
 
         for enemy in self.game.enemies:
-            if enemy != self and self.rect().colliderect(enemy.rect()):
+            if enemy != self and self.physics_rect().colliderect(enemy.physics_rect()):
                 self.prevent_overlap(enemy)
 
                 # Only apply knockback to the other enemy if this enemy is currently being knocked back
@@ -364,7 +441,7 @@ class Enemy(PhysicsEntity):
 
     def prevent_overlap(self, other_enemy):
         """Prevent enemies from overlapping."""
-        overlap_rect = self.rect().clip(other_enemy.rect())
+        overlap_rect = self.physics_rect().clip(other_enemy.physics_rect())
 
         # Prevent overlap by adjusting positions without applying knockback
         if overlap_rect.width > overlap_rect.height:
@@ -384,28 +461,6 @@ class Enemy(PhysicsEntity):
         knockback_strength = 2  # Adjust knockback strength for enemy-to-enemy knockback
         other_enemy.apply_knockback(knockback_vector, knockback_strength)
 
-    def handle_collisions(self, direction):
-        entity_rect = self.rect()
-        for rect in self.game.tilemap.physics_rects_around(self.pos, self.size):
-            if entity_rect.colliderect(rect):
-                if direction == 'left':
-                    self.collisions['left'] = True
-                    self.pos[0] = rect.right
-                    return True
-                elif direction == 'right':
-                    self.collisions['right'] = True
-                    self.pos[0] = rect.left - self.size[0]
-                    return True
-                elif direction == 'up':
-                    self.collisions['up'] = True
-                    self.pos[1] = rect.bottom
-                    return True
-                elif direction == 'down':
-                    self.collisions['down'] = True
-                    self.pos[1] = rect.top - self.size[1]
-                    return True
-        return False
-
     def apply_damage_to_player(self):
         damage = 5
         self.game.player.health -= damage
@@ -423,16 +478,27 @@ class Enemy(PhysicsEntity):
         self.game.enemies.remove(self)
 
     def render(self, surf, offset=(0, 0)):
+
+        # Render damage hitbox
         hitbox_color = (255, 0, 0)
         pygame.draw.rect(
             surf,
             hitbox_color,
-            (self.pos[0] - offset[0], self.pos[1] - offset[1], self.size[0], self.size[1]),
+            (self.pos[0] - offset[0], self.pos[1] - offset[1], self.damage_hitbox[0], self.damage_hitbox[1]),
+            1
+        )
+
+        # Render physics hitbox
+        physics_hitbox_color = (0, 0, 255)
+        pygame.draw.rect(
+            surf, 
+            physics_hitbox_color, 
+            (self.pos[0] - offset[0], self.pos[1] - offset[1] + self.physics_offset_y, self.physics_hitbox[0], self.physics_hitbox[1]), 
             1
         )
 
         surf.blit(
             pygame.transform.flip(self.animation.img(), self.flip, False),
             (self.pos[0] - offset[0] + self.anim_offset[0],
-             self.pos[1] - offset[1] + self.anim_offset[1] - 6)
+             self.pos[1] - offset[1] + self.anim_offset[1])
         )
