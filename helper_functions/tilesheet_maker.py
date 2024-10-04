@@ -5,7 +5,7 @@ import os
 base_directory = '../graphics'
 
 # Directories to exclude
-exclude_dirs = ['levels', 'idle', 'walking', 'cloud', 'particles', 'projectiles', 'ui']
+exclude_dirs = ['levels', 'idle', 'walking', 'cloud', 'particles', 'projectiles', 'ui', 'spells', 'weapons', 'animation', 'precipitation']
 
 # Path to the tilesheet file
 tilesheet_path = os.path.join(base_directory, 'tilesheet.png')

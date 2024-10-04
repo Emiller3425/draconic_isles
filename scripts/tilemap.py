@@ -40,6 +40,7 @@ class Tilemap:
         self.tile_size = tile_size
         self.game = game
         self.tilemap = {}
+        self.tilemap_layer_data_values = {}
         self.offgrid_tiles = []
         self.player_position = (0, 0)
         self.enemy_positions = []
@@ -50,6 +51,12 @@ class Tilemap:
     def load(self):
         # Load the map tilemap
         self.tmx_data = pytmx.load_pygame('./levels/test_level_2/test_level_2.tmx')
+
+        # TODO, find all the numbers in each layer so you don't have to manually chnage the numbers everytime you add new assets/layers,
+        # because this is going to be really fucking annoying
+        for layer in enumerate(self.tmx_data.visible_layers):
+            pass
+            
 
         # Iterate through the layers and create the tilemap
         for layer_index, layer in enumerate(self.tmx_data.visible_layers):
