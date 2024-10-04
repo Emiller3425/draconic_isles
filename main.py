@@ -15,6 +15,7 @@ from scripts.weather import Weather
 
 class Game:
     def __init__(self):
+
         pygame.init()
 
         pygame.display.set_caption("Draconic Isles")
@@ -90,13 +91,13 @@ class Game:
         # self.flash_surface.fill((255, 255, 255))  # White flash effect
 
         # Initialize player
-        self.player = Player(self, (self.tilemap.player_position[0] * self.tilemap.tile_size, self.tilemap.player_position[1] * self.tilemap.tile_size), (16, 16), (16, 6))
+        self.player = Player(self, (self.tilemap.player_position[0] * self.tilemap.tile_size, self.tilemap.player_position[1] * self.tilemap.tile_size), (12, 14), (14, 6))
         # Initialize scroll
         self.scroll = [self.tilemap.player_position[0] * self.tilemap.tile_size, self.tilemap.player_position[1] * self.tilemap.tile_size]
 
         self.enemies = []
         for pos in self.tilemap.enemy_positions:
-            self.enemies.append(Enemy(self, (pos[0] * self.tilemap.tile_size, pos[1] * self.tilemap.tile_size), (16, 16), (16, 6)))
+            self.enemies.append(Enemy(self, (pos[0] * self.tilemap.tile_size, pos[1] * self.tilemap.tile_size), (14, 16), (14, 6)))
 
         self.ui = UI(self, self.player, self.player.equipped_melee, self.player.equipped_spell)
 
@@ -146,6 +147,12 @@ class Game:
             for enemy in self.enemies:
                 self.render_order_objects.append((enemy, enemy.pos[1]))
 
+            for projectile in self.projectiles[:]:
+                if projectile.update():  # If the projectile should be removed
+                    self.projectiles.remove(projectile)
+                else:
+                    self.render_order_objects.append((projectile, projectile.pos[1]))
+
             # Sort all render objects by their y-coordinate (top-down order)
             self.render_order_objects.sort(key=lambda obj: obj[1])
 
@@ -159,21 +166,20 @@ class Game:
                     obj.render(self.display, offset=render_scroll)
                 elif isinstance(obj, Enemy):
                     obj.render(self.display, offset=render_scroll)
+                elif isinstance(obj, Projectile):
+                    obj.render(self.display, offset=render_scroll)
                 elif isinstance(obj, dict):
                     self.tilemap.render_tile(self.display, obj, offset=render_scroll)
-            
-            # Render deferred tiles (tree tops) to ensure they are above the player
-            self.tilemap.render_deferred_tiles()
             
             # update weather system
             self.weather_system.update()
             self.weather_system.render(self.display, offset=(0, 0))
 
-            for projectile in self.projectiles[:]:
-                if projectile.update():  # If the projectile should be removed
-                    self.projectiles.remove(projectile)
-                else:
-                    projectile.render(self.display, offset=render_scroll)
+            # for projectile in self.projectiles[:]:
+            #     if projectile.update():  # If the projectile should be removed
+            #         self.projectiles.remove(projectile)
+            #     else:
+            #         projectile.render(self.display, offset=render_scroll)
 
             # Render the lanterns to remove the night effect in their vicinity
             for light in self.lights:

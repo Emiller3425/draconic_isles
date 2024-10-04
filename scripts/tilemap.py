@@ -8,13 +8,31 @@ PHYSICS_TILE_TYPES = {
     'light', 
     'tree'
     }
+
+PHYSICS_TILE_HITBOXES = {
+    'walls': {
+        0: (16, 16),
+        1: (16, 16),
+        2: (16, 16),
+    },
+    'bush': {
+        0: (16, 16),
+    },
+    'light': {
+        0: (12, 14),
+    },
+    'tree': {
+        0: (16, 16),
+        1: (16, 16),
+        2: (16, 16),
+        3: (16, 16),
+    }
+}
+
 NON_ORDER_TILES = {
     'ground',
     }
 
-EXCLUDED_TILE_VARIANTS = {
-    'tree': [0, 1],   # Example: exclude variant 3 of 'tree'
-}
 # INTRERACTABLE_TILE_TYPES = {'ladder'}
 
 class Tilemap:
@@ -175,15 +193,14 @@ class Tilemap:
                     for tile in self.tilemap[check_loc]:
                        # Exclude tiles based on their type and variant
                         if tile['type'] in PHYSICS_TILE_TYPES:
-                            excluded_variants = EXCLUDED_TILE_VARIANTS.get(tile['type'], [])
-                            if tile['variant'] not in excluded_variants:
-                                rect = pygame.Rect(
-                                    tile['pos'][0] * self.tile_size,
-                                    tile['pos'][1] * self.tile_size,
-                                    tile.get('width', self.tile_size),
-                                    tile.get('height', self.tile_size)
-                                )
-                                rects.append(rect)
+                            width, height = PHYSICS_TILE_HITBOXES.get(tile['type'], {}).get(tile['variant'], (self.tile_size, self.tile_size))
+                            rect = pygame.Rect(
+                                tile['pos'][0] * self.tile_size + ((self.tile_size - width) / 2),
+                                tile['pos'][1] * self.tile_size + ((self.tile_size - height) / 2),
+                                width,
+                                height
+                            )
+                            rects.append(rect)
         return rects
     
 
@@ -220,38 +237,14 @@ class Tilemap:
         x_pos = pos[0] * self.tile_size - offset[0]
         y_pos = pos[1] * self.tile_size - offset[1]
 
-        is_tree_top = tile_type == 'tree' and variant in [0, 1]
+        # Tiles and variants to render over the plyer
+        deferred_tiles = None # tile_type == 'tree' and variant in [0, 1]
 
         # Render all non-tree-top tiles
-        if not is_tree_top:
+        if not deferred_tiles:
             # Only render tiles within the screen bounds
             if (-16 <= x_pos < surf.get_width() + 16) and (-16 <= y_pos < surf.get_height() + 16):
                 surf.blit(
                     self.game.assets[tile_type][variant], 
                     (x_pos, y_pos)
                 )
-            
-        # Store tree-top tiles to render them later
-        if is_tree_top:
-            self.game.deferred_tiles.append((surf, tile, offset))
-    
-    def render_deferred_tiles(self):
-        """
-        Render all deferred tiles (such as tree tops) to ensure they are rendered above the player.
-        """
-        for surf, tile, offset in self.game.deferred_tiles:
-            tile_type = tile['type']
-            variant = tile['variant']
-            pos = tile['pos']
-            x_pos = pos[0] * self.tile_size - offset[0]
-            y_pos = pos[1] * self.tile_size - offset[1]
-
-            # Render deferred tree-top tiles within the screen bounds
-            if (-16 <= x_pos < surf.get_width() + 16) and (-16 <= y_pos < surf.get_height() + 16):
-                surf.blit(
-                    self.game.assets[tile_type][variant], 
-                    (x_pos, y_pos)
-                )
-        
-        # Clear deferred tiles list after rendering
-        self.game.deferred_tiles.clear()

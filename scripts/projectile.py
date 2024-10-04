@@ -150,4 +150,5 @@ class FireballSpell(Projectile):
                    self.pos[1] - offset[1] - img.get_height() // 2))
 
         hitbox = self.rect().move(-offset[0], -offset[1])
-        # pygame.draw.rect(surf, (0, 255, 0), hitbox, 1)  # Green hitbox for debugging
+        # Green hitbox for debugging
+        # pygame.draw.rect(surf, (0, 255, 0), hitbox, 1)

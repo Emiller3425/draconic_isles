@@ -13,8 +13,11 @@ class PhysicsEntity:
         self.type = e_type
         self.pos = list(pos)
         self.damage_hitbox = damage_hitbox
+        self.damage_offset_y = (16 - damage_hitbox[1]) / 2
+        self.damage_offset_x = (16 - damage_hitbox[0]) / 2
         self.physics_hitbox = physics_hitbox
         self.physics_offset_y = (16 - physics_hitbox[1]) / 2
+        self.physics_offset_x = (16 - physics_hitbox[0]) / 2
         self.velocity_x = [0, 0]
         self.velocity_y = [0, 0]
         self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
@@ -25,12 +28,10 @@ class PhysicsEntity:
         self.set_action('idle_down')
     
     def damage_rect(self):
-        return pygame.Rect(self.pos[0], self.pos[1], self.damage_hitbox[0], self.damage_hitbox[1])
+        return pygame.Rect(self.pos[0] + self.damage_offset_x, self.pos[1] + self.damage_offset_y, self.damage_hitbox[0], self.damage_hitbox[1])
     
     def physics_rect(self):
-        print("physics")
-        print(self.pos[1])
-        return pygame.Rect(self.pos[0], self.pos[1] + self.physics_offset_y, self.physics_hitbox[0], self.physics_hitbox[1])
+        return pygame.Rect(self.pos[0] + self.physics_offset_x, self.pos[1] + self.physics_offset_y, self.physics_hitbox[0], self.physics_hitbox[1])
 
     def set_action(self, action):
         if action != self.action:
@@ -86,33 +87,32 @@ class PhysicsEntity:
     def melee(self):
         self.melee_attack = True
         if self.is_facing == 'up':
-            self.melee_hitbox = pygame.Rect(self.pos[0]+4, self.pos[1] - 14, 8, 18)
+            self.melee_hitbox = pygame.Rect(self.pos[0] + 4, self.pos[1] - 14, 8, 18)
         elif self.is_facing == 'down':
-            self.melee_hitbox = pygame.Rect(self.pos[0]+4, self.pos[1] + 4, 8, 18)
+            self.melee_hitbox = pygame.Rect(self.pos[0] + 4, self.pos[1] + 4, 8, 18)
         elif self.is_facing == 'left':
-            self.melee_hitbox = pygame.Rect(self.pos[0]-14, self.pos[1], 18, 8)
+            self.melee_hitbox = pygame.Rect(self.pos[0] - 14, self.pos[1], 18, 8)
         elif self.is_facing == 'right':
-            self.melee_hitbox = pygame.Rect(self.pos[0]+12, self.pos[1], 18, 8)
+            self.melee_hitbox = pygame.Rect(self.pos[0] + 12, self.pos[1], 18, 8)
         if self.melee_attack == True:
             self.can_attack = True
             
     def handle_collisions(self, direction):
         entity_rect = self.physics_rect()
-        for rect in self.game.tilemap.physics_rects_around(self.pos, self.physics_hitbox):
+        for rect in self.game.tilemap.physics_rects_around((self.pos[0] + self.physics_offset_x, self.pos[1] + self.physics_offset_y), self.physics_hitbox):
             if entity_rect.colliderect(rect):
-                print(direction)
                 if direction == 'left':
                     self.collisions['left'] = True
-                    self.pos[0] = rect.right
+                    self.pos[0] = rect.right - self.physics_offset_x
                 elif direction == 'right':
                     self.collisions['right'] = True
-                    self.pos[0] = rect.left - self.physics_hitbox[0]
+                    self.pos[0] = rect.left - self.physics_hitbox[0] - 1
                 elif direction == 'up':
                     self.collisions['up'] = True
                     self.pos[1] = rect.bottom - self.physics_offset_y
                 elif direction == 'down':
                     self.collisions['down'] = True
-                    self.pos[1] = rect.top - self.physics_hitbox[1] - 1
+                    self.pos[1] = rect.top - self.physics_hitbox[1] - self.physics_offset_y
 
     def render(self, surf, offset=(0, 0)):
         surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), 
@@ -294,22 +294,22 @@ class Player(PhysicsEntity):
     def render(self, surf, offset=(0, 0)):
 
         # Render damage hitbox
-        hitbox_color = (255, 0, 0)
-        pygame.draw.rect(
-            surf, 
-            hitbox_color, 
-            (self.pos[0] - offset[0], self.pos[1] - offset[1], self.damage_hitbox[0], self.damage_hitbox[1]), 
-            1
-        )
+        # hitbox_color = (255, 0, 0)
+        # pygame.draw.rect(
+        #     surf, 
+        #     hitbox_color, 
+        #     (self.pos[0] - offset[0] + self.damage_offset_x, self.pos[1] - offset[1] + self.damage_offset_y, self.damage_hitbox[0], self.damage_hitbox[1]), 
+        #     1
+        # )
 
-        # Render physics hitbox
-        physics_hitbox_color = (0, 0, 255)
-        pygame.draw.rect(
-            surf, 
-            physics_hitbox_color, 
-            (self.pos[0] - offset[0], self.pos[1] - offset[1] + self.physics_offset_y, self.physics_hitbox[0], self.physics_hitbox[1]), 
-            1
-        )
+        # #Render physics hitbox
+        # physics_hitbox_color = (0, 0, 255)
+        # pygame.draw.rect(
+        #     surf, 
+        #     physics_hitbox_color, 
+        #     (self.pos[0] - offset[0] + self.physics_offset_x, self.pos[1] - offset[1] + self.physics_offset_y, self.physics_hitbox[0], self.physics_hitbox[1]), 
+        #     1
+        # )
 
 
         # Only render the weapon if melee_hitbox is not None
@@ -340,14 +340,14 @@ class Player(PhysicsEntity):
             self.pos[1] - offset[1] + self.anim_offset[1])
         )
         
-        # Optionally draw the melee hitbox for debugging
-        if self.melee_hitbox is not None:
-            melee_hitbox_color = (0, 255, 0)
-            pygame.draw.rect(surf, melee_hitbox_color, 
-                            pygame.Rect(self.melee_hitbox.x - offset[0], 
-                                        self.melee_hitbox.y - offset[1], 
-                                        self.melee_hitbox.width, 
-                                        self.melee_hitbox.height), 1)
+        # # Optionally draw the melee hitbox for debugging
+        # if self.melee_hitbox is not None:
+        #     melee_hitbox_color = (0, 255, 0)
+        #     pygame.draw.rect(surf, melee_hitbox_color, 
+        #                     pygame.Rect(self.melee_hitbox.x - offset[0], 
+        #                                 self.melee_hitbox.y - offset[1], 
+        #                                 self.melee_hitbox.width, 
+        #                                 self.melee_hitbox.height), 1)
 
 
 
@@ -480,22 +480,22 @@ class Enemy(PhysicsEntity):
     def render(self, surf, offset=(0, 0)):
 
         # Render damage hitbox
-        hitbox_color = (255, 0, 0)
-        pygame.draw.rect(
-            surf,
-            hitbox_color,
-            (self.pos[0] - offset[0], self.pos[1] - offset[1], self.damage_hitbox[0], self.damage_hitbox[1]),
-            1
-        )
+        # hitbox_color = (255, 0, 0)
+        # pygame.draw.rect(
+        #     surf,
+        #     hitbox_color,
+        #     (self.pos[0] - offset[0] + self.damage_offset_x, self.pos[1] - offset[1] + self.damage_offset_y, self.damage_hitbox[0], self.damage_hitbox[1]),
+        #     1
+        # )
 
-        # Render physics hitbox
-        physics_hitbox_color = (0, 0, 255)
-        pygame.draw.rect(
-            surf, 
-            physics_hitbox_color, 
-            (self.pos[0] - offset[0], self.pos[1] - offset[1] + self.physics_offset_y, self.physics_hitbox[0], self.physics_hitbox[1]), 
-            1
-        )
+        # # Render physics hitbox
+        # physics_hitbox_color = (0, 0, 255)
+        # pygame.draw.rect(
+        #     surf, 
+        #     physics_hitbox_color, 
+        #     (self.pos[0] - offset[0] + self.physics_offset_x, self.pos[1] - offset[1] + self.physics_offset_y, self.physics_hitbox[0], self.physics_hitbox[1]), 
+        #     1
+        # )
 
         surf.blit(
             pygame.transform.flip(self.animation.img(), self.flip, False),
