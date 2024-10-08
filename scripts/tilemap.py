@@ -97,7 +97,7 @@ class Tilemap:
         for k in self.object_layers:
             bottom_left_pos = (0, 0)
             for v in self.object_layers[k]:
-                if v != 'variants':
+                if v == 'posistions':
                     for i in self.object_layers[k][v]:
                         if bottom_left_pos[1] < i[1]:
                             bottom_left_pos = i
