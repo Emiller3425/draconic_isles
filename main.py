@@ -5,12 +5,14 @@ import math
 from scripts.entities import PhysicsEntity, Player, Enemy
 from scripts.utils import load_image, load_images, Animation
 from scripts.tilemap import Tilemap
+from scripts.tilemap import Tilemap
 from scripts.particle import Particle
 from scripts.light import Light
 from scripts.ui import UI
 from scripts.precipitation import Precipitation, Raindrops
 from scripts.projectile import Projectile, FireballSpell
 from scripts.weather import Weather
+from scripts.bonfire import Bonfire
 
 
 class Game:
@@ -28,8 +30,8 @@ class Game:
         self.movement_y = [False, False]
 
         self.assets = {
-            'player': load_image('player/player.png'),
-            'skeleton': load_image('skeleton/skeleton.png'),
+            'player': load_images('player/'),
+            'skeleton': load_images('skeleton/'),
             'walls': load_images('walls/'),
             'ground': load_images('ground/'),
             'light': load_images('light/'),
@@ -59,8 +61,8 @@ class Game:
             'fireballspell_vertical' : Animation(load_images('spells/damage/fireball/traveling_vertical'), img_dur=8),
             'fireballspell_impact' : Animation(load_images('spells/damage/fireball/impact'), img_dur=2),
             'particles/lamp_particle': Animation(load_images('particles/lamp_particle/'), img_dur=random.randint(5, 30), loop=False),
-            'bonfire': load_image('bonfire/bonfire.png'),
-            'bonfire/fire': Animation(load_images('bonfire/animation/'), img_dur=10),
+            'bonfire': load_images('bonfire/'),
+            'bonfire/animation': Animation(load_images('bonfire/animation'), img_dur=8),
         }
 
 
@@ -90,14 +92,25 @@ class Game:
         # self.flash_surface = pygame.Surface(self.display.get_size())  # Surface for the flash effect
         # self.flash_surface.fill((255, 255, 255))  # White flash effect
 
-        # Initialize player
-        self.player = Player(self, (self.tilemap.player_position[0] * self.tilemap.tile_size, self.tilemap.player_position[1] * self.tilemap.tile_size), (12, 14), (14, 6))
-        # Initialize scroll
-        self.scroll = [self.tilemap.player_position[0] * self.tilemap.tile_size, self.tilemap.player_position[1] * self.tilemap.tile_size]
-
+        # Initilize all entities
         self.enemies = []
-        for pos in self.tilemap.enemy_positions:
-            self.enemies.append(Enemy(self, (pos[0] * self.tilemap.tile_size, pos[1] * self.tilemap.tile_size), (14, 16), (14, 6)))
+        self.bonfires = []
+        self.animated_objects = []
+
+        for k in self.tilemap.object_layers:
+            for v in self.tilemap.object_layers[k]['positions']:
+                if k == 'player':
+                    self.player = Player(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), (12, 14), (14, 6))
+                    self.scroll = [v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size]
+                elif k == 'skeleton':
+                    self.enemies.append(Enemy(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), (14, 16), (14, 6)))
+                elif k =='bonfire':
+                    self.bonfires.append(Bonfire(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size)))
+        for k in self.tilemap.animated_layers:
+            for v in self.tilemap.animated_layers[k]['positions']:
+                # TODO handle animated layers
+                pass
+                    
 
         self.ui = UI(self, self.player, self.player.equipped_melee, self.player.equipped_spell)
 
@@ -124,12 +137,16 @@ class Game:
 
             for enemy in self.enemies:
                 enemy.update()
-                enemy.render(self.display, offset=render_scroll)
+
+            for bonfire in self.bonfires:
+                bonfire.update()
+            
             
             # RENDERING
             # Collect all tiles and objects to be rendered
             self.render_order_objects = []
             self.render_objects = []
+            self.animated_objects = []
 
             # Add all tiles from the tilemap
             for tile in self.all_tiles:
@@ -140,12 +157,18 @@ class Game:
                 tile_pos = (tile['pos'][0] * self.tilemap.tile_size, tile['pos'][1] * self.tilemap.tile_size)
                 self.render_objects.append((tile, tile_pos[1]))
 
+            for tile in self.tilemap.animated_layers:
+                pass
+
             # Add player to render list
             self.render_order_objects.append((self.player, self.player.pos[1]))
 
             # Add enemies to render list
             for enemy in self.enemies:
                 self.render_order_objects.append((enemy, enemy.pos[1]))
+
+            for bonfire in self.bonfires:
+                self.render_order_objects.append((bonfire, bonfire.pos[1]))
 
             for projectile in self.projectiles[:]:
                 if projectile.update():  # If the projectile should be removed
@@ -168,8 +191,12 @@ class Game:
                     obj.render(self.display, offset=render_scroll)
                 elif isinstance(obj, Projectile):
                     obj.render(self.display, offset=render_scroll)
+                elif isinstance(obj, Bonfire):
+                    obj.render(self.display, offset=render_scroll)
                 elif isinstance(obj, dict):
                     self.tilemap.render_tile(self.display, obj, offset=render_scroll)
+
+            
             
             # update weather system
             self.weather_system.update()
@@ -225,7 +252,7 @@ class Game:
                         self.movement_y[1] = True
                     if event.key == pygame.K_q:
                         self.player.melee()
-                    if event.key == pygame.K_e:  # Cast fireball spell when 'E' is pressed
+                    if event.key == pygame.K_e: 
                         self.player.cast_spell()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:

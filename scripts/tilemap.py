@@ -22,8 +22,8 @@ PHYSICS_TILE_HITBOXES = {
         0: (12, 14),
     },
     'tree': {
-        0: (16, 16),
-        1: (16, 16),
+        0: (0, 0),
+        1: (0, 0),
         2: (16, 16),
         3: (16, 16),
     }
@@ -41,70 +41,78 @@ class Tilemap:
         self.game = game
         self.tilemap = {}
         self.tilemap_layer_data_values = {}
+        self.object_layers = {
+            'player' : {'positions': [], 'variants': []},
+            'skeleton' : {'positions': [], 'variants': []},
+            'bonfire' : {'positions': [], 'variants': []},
+        }
+        self.animated_layers = {
+            # TODO try bush first after bottom left most occurances is dones
+        }
         self.offgrid_tiles = []
         self.player_position = (0, 0)
         self.enemy_positions = []
         self.boss_positions = []
         self.trees = []
-        self.boss_counter = 0
 
     def load(self):
         # Load the map tilemap
         self.tmx_data = pytmx.load_pygame('./levels/test_level_2/test_level_2.tmx')
 
-        # TODO, find all the numbers in each layer so you don't have to manually chnage the numbers everytime you add new assets/layers,
-        # because this is going to be really fucking annoying
-        for layer in enumerate(self.tmx_data.visible_layers):
-            pass
-            
+        # create dictionary with key = layer names and values an array on integers in the data
+        for layer_index, layer in enumerate(self.tmx_data.visible_layers):
+            self.tilemap_layer_data_values.update({layer.name:[]})
 
-        # Iterate through the layers and create the tilemap
+        # Add integer values of each layer into corresponding layer       
+        for layer_index, layer in enumerate(self.tmx_data.visible_layers):
+            for x, y , surf in layer.tiles():
+                if layer.data[y][x] not in self.tilemap_layer_data_values[layer.name]:
+                    self.tilemap_layer_data_values[layer.name].append(layer.data[y][x])
+        
+        # Match value within the layer to the variant that is the corresponding index of the layer
         for layer_index, layer in enumerate(self.tmx_data.visible_layers):
             for x, y, surf in layer.tiles():
                 key = str(x) + ';' + str(y)
                 if key not in self.tilemap:
                     self.tilemap[key] = []
-                if layer.name == 'ground':
-                    if layer.data[y][x] == 1:
-                        self.tilemap[key].append({'type': 'ground', 'variant': 0, 'pos': (x, y), 'layer': layer_index})
-                    if layer.data[y][x] == 2:
-                        self.tilemap[key].append({'type': 'ground', 'variant': 1, 'pos': (x, y), 'layer': layer_index})
-                    if layer.data[y][x] == 3:
-                        self.tilemap[key].append({'type': 'ground', 'variant': 2, 'pos': (x, y), 'layer': layer_index})
-                if layer.name == 'walls':
-                    if layer.data[y][x] == 4:
-                        self.tilemap[key].append({'type': 'walls', 'variant': 0, 'pos': (x, y), 'layer': layer_index})
-                    if layer.data[y][x] == 5:
-                        self.tilemap[key].append({'type': 'walls', 'variant': 1, 'pos': (x, y), 'layer': layer_index})
-                    if layer.data[y][x] == 6:
-                        self.tilemap[key].append({'type': 'walls', 'variant': 2, 'pos': (x, y), 'layer': layer_index})
-                    if layer.data[y][x] == 7:
-                        self.tilemap[key].append({'type': 'walls', 'variant': 3, 'pos': (x, y), 'layer': layer_index})
-                    if layer.data[y][x] == 8:
-                        self.tilemap[key].append({'type': 'walls', 'variant': 4, 'pos': (x, y), 'layer': layer_index})
-                    if layer.data[y][x] == 9:
-                        self.tilemap[key].append({'type': 'walls', 'variant': 5, 'pos': (x, y), 'layer': layer_index})
-                # TODO Rename this layer to lights in Tiled, needs to be more general for all light sources, there will be more claseses for each light in the future
-                if layer.name == 'lantern':
-                    self.tilemap[key].append({'type': 'light', 'variant': 0, 'pos': (x, y), 'layer': layer_index})
-                if layer.name == 'bush':
-                    self.tilemap[key].append({'type': 'bush', 'variant': 0, 'pos': (x, y), 'layer': layer_index})
-                if layer.name == 'tree':
-                    if layer.data[y][x] == 12:
-                        self.tilemap[key].append({'type': 'tree', 'variant': 0, 'pos': (x, y), 'layer': layer_index})
-                    if layer.data[y][x] == 13:
-                        self.tilemap[key].append({'type': 'tree', 'variant': 1, 'pos': (x, y), 'layer': layer_index})
-                    if layer.data[y][x] == 14:
-                        self.tilemap[key].append({'type': 'tree', 'variant': 2, 'pos': (x, y), 'layer': layer_index})
-                    if layer.data[y][x] == 15:
-                        self.tilemap[key].append({'type': 'tree', 'variant': 3, 'pos': (x, y), 'layer': layer_index})
-                if layer.name == 'player':
-                    self.player_position = (x, y)
-                # TODO Change to layer to skeleton here and in tiled as more enemies are added
-                if layer.name == 'enemy':
-                    self.enemy_positions.append((x, y))
-                # TODO: Add enemy locations as more are added and boss positions
-    
+                if layer.data[y][x] != 0:
+                    if layer.data[y][x] in self.tilemap_layer_data_values[layer.name]:
+                        if layer.name not in self.object_layers and layer.name not in self.animated_layers:
+                            self.tilemap[key].append({'type': layer.name, 'variant': self.tilemap_layer_data_values[layer.name].index(layer.data[y][x]), 'pos': (x, y), 'layer': layer_index})
+                        for k in self.object_layers:
+                            if layer.name == k:
+                                self.object_layers[k]['positions'].append((x,y))
+                                self.object_layers[k]['variants'].append(self.tilemap_layer_data_values[layer.name].index(layer.data[y][x]))
+                        for k in self.animated_layers:
+                            if layer.name == k:
+                                self.animated_layers[k]['positions'].append((x,y))
+
+        variants = self.get_bottom_left_most_variants()
+
+        # TODO Get all occurances of bottom left-most variant
+        
+    def get_bottom_left_most_variants(self):
+        bottom_left_positions = {}
+        bottom_left_variants = {}
+        for k in self.object_layers:
+            bottom_left_pos = (0, 0)
+            for v in self.object_layers[k]:
+                if v != 'variants':
+                    for i in self.object_layers[k][v]:
+                        if bottom_left_pos[1] < i[1]:
+                            bottom_left_pos = i
+                        elif bottom_left_pos[0] > i[0]:
+                            bottom_left_pos = i
+                    bottom_left_positions[k] = []
+                    bottom_left_positions[k].append(bottom_left_pos)
+                    bottom_left_index = self.object_layers[k][v].index(bottom_left_positions[k][0])
+                    bottom_left_variants[k] = []
+                    y = self.object_layers[k]['variants'][bottom_left_index]
+                    bottom_left_variants[k] = []
+                    bottom_left_variants[k].append(y)
+                                  
+        return bottom_left_variants
+
     def extract(self, id_pairs, keep=False):
         matches = []
         for tile in self.offgrid_tiles.copy():
@@ -166,7 +174,25 @@ class Tilemap:
                         'layer': tile['layer']
                     }
                     all_tiles.append(tile_info)
-        return all_tiles                    
+        return all_tiles       
+
+    def get_animated_tiles(self):
+        """
+        Find and return all animated tiles such as bonfires.
+        """
+        all_tiles = []
+        for key, tiles in self.tilemap.items():
+            for tile in tiles:
+                if tile['type'] in self.animated_tiles:
+                    tile_info = {
+                        'type': tile['type'],
+                        'variant': tile['variant'],
+                        'pos': tile['pos'],
+                        'layer': tile['layer'],
+                        'animation': self.game.assets[tile['type'] + '/animation'].copy()  # Add animation for bonfire
+                    }
+                    all_tiles.append(tile_info)
+        return all_tiles
 
     def tiles_arounds(self, pos):
         tiles = []
@@ -247,11 +273,16 @@ class Tilemap:
         # Tiles and variants to render over the plyer
         deferred_tiles = None # tile_type == 'tree' and variant in [0, 1]
 
-        # Render all non-tree-top tiles
-        if not deferred_tiles:
+        # Render all non-deferred tiles
+        if not deferred_tiles and tile_type not in self.animated_layers:
             # Only render tiles within the screen bounds
             if (-16 <= x_pos < surf.get_width() + 16) and (-16 <= y_pos < surf.get_height() + 16):
                 surf.blit(
                     self.game.assets[tile_type][variant], 
                     (x_pos, y_pos)
                 )
+
+    
+
+            
+

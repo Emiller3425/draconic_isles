@@ -1,17 +1,13 @@
 import pygame
-import math
-import random
 
-# TODO The bonfire class is used to create a bonfire which acts as a save point for the player when they die, 
-# players can interact with to set spawn and can also fast travel in between,
-# May introduce upgrade system later with this
-class Bonfire:
-    def __init__(self, game, pos):
+class Animated:
+    def __init__(self, type, game, pos):
         self.game = game
         self.pos = pos
         self.anim_offset = (0,0)
         self.flip = False
-        self.animation = self.game.assets['bonfire/animation'].copy()  # Load the bonfire animation
+        self.type = type
+        self.animation = self.game.assets[self.type + '/animation'].copy()  # Load the bonfire animation
 
     def update(self):
         self.animation.update()  # Update the animation each frame
