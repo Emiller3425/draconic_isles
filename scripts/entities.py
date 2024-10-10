@@ -78,7 +78,7 @@ class PhysicsEntity:
                 self.set_action('idle_up')
             elif self.is_facing == 'left' or self.is_facing == 'right':
                 self.set_action('idle_horizontal')
-        
+                
         self.animation.update()
 
     def die(self):
@@ -124,6 +124,7 @@ class PhysicsEntity:
 class Player(PhysicsEntity):
     def __init__(self, game, pos, damage_hitbox, physics_hitbox):
         super().__init__(game, 'player', pos, damage_hitbox, physics_hitbox)
+        self.spawn_point = self.pos.copy()
         self.health = 100
         self.max_health = 100
         self.stamina = 100
@@ -140,6 +141,8 @@ class Player(PhysicsEntity):
         self.vertical_spell_flip = False
         self.melee_attack_duration = 0 
         self.is_melee_attacking = False
+        self.nearby_bonfires = []
+        self.nearby_bonfire_objects = []
 
         self.attack_cooldowns = {
             'melee': {'current': 0, 'max': 30},
@@ -161,13 +164,29 @@ class Player(PhysicsEntity):
         self.knockback_duration = 10
         self.knockback_remaining = 0
         self.knockback_direction = None
+
+    def update_spawn(self):
+        self.spawn_point = [self.nearby_bonfire_objects[0].pos[0] + 8, self.nearby_bonfire_objects[0].pos[1] + 24]
     
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
+
+        # Reset Nearby Bonfires
+        self.nearby_bonfires = []
+        self.nearby_bonfire_objects = []
 
         if self.knockback_remaining > 0:
             self.apply_knockback_movement()
         elif not self.is_melee_attacking:
             super().update(movement_x, movement_y)
+
+        # Check For Nearby Bonfires
+        self.nearby_bonfires = self.game.tilemap.bonfires_around((self.pos[0] + self.physics_offset_x, self.pos[1] + self.physics_offset_y), self.physics_hitbox).copy()
+        for bonfire in self.game.bonfires:
+            if bonfire.pos in self.nearby_bonfires:
+                self.nearby_bonfire_objects.append(bonfire)
+
+        # TODO handle save on nearby bonfires
+        
 
         # Update melee attack duration
         if self.melee_hitbox is not None:
@@ -197,6 +216,15 @@ class Player(PhysicsEntity):
         # Handle Death
         if self.health <= 0:
             self.die()
+
+    def die(self):
+        self.pos = self.spawn_point.copy()
+        self.health = self.max_health
+        self.stamina = self.max_stamina
+        self.mana = self.max_mana
+        self.knockback_velocity = [0, 0]
+        self.is_facing = 'down'
+        self.set_action('idle_down')
 
     def apply_knockback(self, knockback_vector, knockback_strength):
         distance = max(1, (knockback_vector[0] ** 2 + knockback_vector[1] ** 2) ** 0.5)

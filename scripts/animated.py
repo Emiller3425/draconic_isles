@@ -1,7 +1,7 @@
 import pygame
 
 class Animated:
-    def __init__(self, type, game, pos):
+    def __init__(self, game, type, pos):
         self.game = game
         self.pos = pos
         self.anim_offset = (0,0)

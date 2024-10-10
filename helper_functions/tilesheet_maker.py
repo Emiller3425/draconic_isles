@@ -2,10 +2,10 @@ from PIL import Image
 import os
 
 # Directory containing the PNG files
-base_directory = '../graphics'
+base_directory = '../graphics/tree'
 
 # Directories to exclude
-exclude_dirs = ['levels', 'idle', 'walking', 'cloud', 'particles', 'projectiles', 'ui', 'spells', 'weapons', 'animation', 'precipitation']
+exclude_dirs = ['levels', 'idle', 'walking', 'cloud', 'particles', 'projectiles', 'ui', 'spells', 'weapons', 'animation', 'original_image','precipitation']
 
 # Path to the tilesheet file
 tilesheet_path = os.path.join(base_directory, 'tilesheet.png')
@@ -37,7 +37,7 @@ tile_width, tile_height = 16, 16
 num_tiles = sum((image.width // tile_width) * (image.height // tile_height) for image in images)
 
 # Determine the size of the tilesheet
-tiles_per_row = 10  # Adjust based on your preference
+tiles_per_row = 2  # Adjust based on your preference
 tilesheet_width = tile_width * tiles_per_row
 tilesheet_height = tile_height * ((num_tiles + tiles_per_row - 1) // tiles_per_row)
 

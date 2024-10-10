@@ -1,12 +1,14 @@
 import pygame
 import pytmx
+import copy
 
 NEIGHBORS_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1), (0, 1), (1, 1)]
 PHYSICS_TILE_TYPES = {
     'walls', 
     'bush', 
     'light', 
-    'tree'
+    'tree',
+    'bonfire'
     }
 
 PHYSICS_TILE_HITBOXES = {
@@ -16,7 +18,7 @@ PHYSICS_TILE_HITBOXES = {
         2: (16, 16),
     },
     'bush': {
-        0: (16, 16),
+        0: (12, 12),
     },
     'light': {
         0: (12, 14),
@@ -24,8 +26,14 @@ PHYSICS_TILE_HITBOXES = {
     'tree': {
         0: (0, 0),
         1: (0, 0),
-        2: (16, 16),
-        3: (16, 16),
+        2: (4, 16),
+        3: (4, 16),
+    },
+    'bonfire': {
+        0: (0, 0),
+        1: (0, 0),
+        2: (8, 14),
+        3: (8, 14),
     }
 }
 
@@ -41,13 +49,14 @@ class Tilemap:
         self.game = game
         self.tilemap = {}
         self.tilemap_layer_data_values = {}
+        # Dict used for drawable objects, animated objects, and large objects (larger than 16x16)
         self.object_layers = {
             'player' : {'positions': [], 'variants': []},
             'skeleton' : {'positions': [], 'variants': []},
             'bonfire' : {'positions': [], 'variants': []},
-        }
-        self.animated_layers = {
-            # TODO try bush first after bottom left most occurances is dones
+            # Animation Objects
+            'bush' : {'positions': [], 'variants': []},
+            'tree' : {'positions': [], 'variants': []},
         }
         self.offgrid_tiles = []
         self.player_position = (0, 0)
@@ -68,6 +77,8 @@ class Tilemap:
             for x, y , surf in layer.tiles():
                 if layer.data[y][x] not in self.tilemap_layer_data_values[layer.name]:
                     self.tilemap_layer_data_values[layer.name].append(layer.data[y][x])
+
+        self.temp_object_layers = copy.deepcopy(self.object_layers)
         
         # Match value within the layer to the variant that is the corresponding index of the layer
         for layer_index, layer in enumerate(self.tmx_data.visible_layers):
@@ -77,41 +88,44 @@ class Tilemap:
                     self.tilemap[key] = []
                 if layer.data[y][x] != 0:
                     if layer.data[y][x] in self.tilemap_layer_data_values[layer.name]:
-                        if layer.name not in self.object_layers and layer.name not in self.animated_layers:
-                            self.tilemap[key].append({'type': layer.name, 'variant': self.tilemap_layer_data_values[layer.name].index(layer.data[y][x]), 'pos': (x, y), 'layer': layer_index})
-                        for k in self.object_layers:
-                            if layer.name == k:
-                                self.object_layers[k]['positions'].append((x,y))
-                                self.object_layers[k]['variants'].append(self.tilemap_layer_data_values[layer.name].index(layer.data[y][x]))
-                        for k in self.animated_layers:
-                            if layer.name == k:
-                                self.animated_layers[k]['positions'].append((x,y))
+                        self.tilemap[key].append({'type': layer.name, 'variant': self.tilemap_layer_data_values[layer.name].index(layer.data[y][x]), 'pos': (x, y), 'layer': layer_index})
+                    for k in self.temp_object_layers:
+                        if layer.name == k:
+                            self.temp_object_layers[k]['positions'].append((x,y))
+                            self.temp_object_layers[k]['variants'].append(self.tilemap_layer_data_values[layer.name].index(layer.data[y][x]))
 
-        variants = self.get_bottom_left_most_variants()
-
-        # TODO Get all occurances of bottom left-most variant
+        variants = self.get_top_left_most_variants()
         
-    def get_bottom_left_most_variants(self):
-        bottom_left_positions = {}
-        bottom_left_variants = {}
-        for k in self.object_layers:
-            bottom_left_pos = (0, 0)
-            for v in self.object_layers[k]:
-                if v == 'posistions':
-                    for i in self.object_layers[k][v]:
-                        if bottom_left_pos[1] < i[1]:
-                            bottom_left_pos = i
-                        elif bottom_left_pos[0] > i[0]:
-                            bottom_left_pos = i
-                    bottom_left_positions[k] = []
-                    bottom_left_positions[k].append(bottom_left_pos)
-                    bottom_left_index = self.object_layers[k][v].index(bottom_left_positions[k][0])
-                    bottom_left_variants[k] = []
-                    y = self.object_layers[k]['variants'][bottom_left_index]
-                    bottom_left_variants[k] = []
-                    bottom_left_variants[k].append(y)
+        for k1 in self.temp_object_layers:
+            for k2 in variants:
+                if k1 == k2:
+                    for i in range(0, len(self.temp_object_layers[k1]['variants'])):
+                        if variants[k2][0] == self.temp_object_layers[k1]['variants'][i]:
+                            self.object_layers[k1]['positions'].append(self.temp_object_layers[k1]['positions'][i])
+        
+    def get_top_left_most_variants(self):
+        top_left_positions = {}
+        top_left_variants = {}
+        for k in self.temp_object_layers:
+            top_left_pos = None
+            for v in self.temp_object_layers[k]:
+                if v != 'variants':
+                    for i in self.temp_object_layers[k][v]:
+                        if top_left_pos == None:
+                            top_left_pos = i
+                        elif top_left_pos[1] > i[1]:
+                            top_left_pos = i
+                        elif top_left_pos[0] > i[0]:
+                            top_left_pos = i
+                    top_left_positions[k] = []
+                    top_left_positions[k].append(top_left_pos)
+                    top_left_index = self.temp_object_layers[k][v].index(top_left_positions[k][0])
+                    top_left_variants[k] = []
+                    y = self.temp_object_layers[k]['variants'][top_left_index]
+                    top_left_variants[k] = []
+                    top_left_variants[k].append(y)
                                   
-        return bottom_left_variants
+        return top_left_variants
 
     def extract(self, id_pairs, keep=False):
         matches = []
@@ -237,6 +251,28 @@ class Tilemap:
         return rects
     
 
+    # TODO get nearby bonfires for when to show interact key for spawn saving
+    def bonfires_around(self, pos, player_size):
+        nearby_bonfires = []
+
+        # Calculate the number of tiles the entity covers
+        start_tile_x = int(pos[0] // self.tile_size) - 2
+        end_tile_x = int((pos[0] + player_size[0]) // self.tile_size) + 2
+        start_tile_y = int(pos[1] // self.tile_size) - 2
+        end_tile_y = int((pos[1] + player_size[1]) // self.tile_size) + 2
+
+        for x in range(start_tile_x, end_tile_x):
+            for y in range(start_tile_y, end_tile_y):
+                check_loc = f"{x};{y}"
+                if check_loc in self.tilemap:
+                    for tile in self.tilemap[check_loc]:
+                       # Check for bonfire object positions
+                        if tile['type'] == 'bonfire':
+                            if ((x,y)) in self.object_layers['bonfire']['positions']:
+                                nearby_bonfires.append((x * self.tile_size,y * self.tile_size))
+
+        return nearby_bonfires
+
     # def render(self, surf, offset=(0, 0)):
     #         """
     #         Render the tilemap to the given surface.
@@ -274,7 +310,7 @@ class Tilemap:
         deferred_tiles = None # tile_type == 'tree' and variant in [0, 1]
 
         # Render all non-deferred tiles
-        if not deferred_tiles and tile_type not in self.animated_layers:
+        if not deferred_tiles and tile_type not in self.object_layers:
             # Only render tiles within the screen bounds
             if (-16 <= x_pos < surf.get_width() + 16) and (-16 <= y_pos < surf.get_height() + 16):
                 surf.blit(

@@ -13,6 +13,7 @@ from scripts.precipitation import Precipitation, Raindrops
 from scripts.projectile import Projectile, FireballSpell
 from scripts.weather import Weather
 from scripts.bonfire import Bonfire
+from scripts.animated import Animated
 
 
 class Game:
@@ -36,7 +37,9 @@ class Game:
             'ground': load_images('ground/'),
             'light': load_images('light/'),
             'tree': load_images('tree/'),
+            'tree/animation' :  Animation(load_images('tree/animation'), img_dur=60),
             'bush': load_images('bush/'),
+            'bush/animation' :  Animation(load_images('bush/animation'), img_dur=60),
             'player/idle_down': Animation(load_images('player/idle/idle_down'), img_dur=25),
             'player/idle_up': Animation(load_images('player/idle/idle_up'), img_dur=25),
             'player/idle_horizontal': Animation(load_images('player/idle/idle_horizontal'), img_dur=25),
@@ -63,6 +66,7 @@ class Game:
             'particles/lamp_particle': Animation(load_images('particles/lamp_particle/'), img_dur=random.randint(5, 30), loop=False),
             'bonfire': load_images('bonfire/'),
             'bonfire/animation': Animation(load_images('bonfire/animation'), img_dur=8),
+            'f_key': load_image('keys/f_key/0.png'),
         }
 
 
@@ -96,6 +100,12 @@ class Game:
         self.enemies = []
         self.bonfires = []
         self.animated_objects = []
+        self.lights = []
+        self.lamp_particle_spawners = []
+        # Get all projectiless
+        self.projectiles = []
+        self.particles = []
+
 
         for k in self.tilemap.object_layers:
             for v in self.tilemap.object_layers[k]['positions']:
@@ -106,24 +116,16 @@ class Game:
                     self.enemies.append(Enemy(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), (14, 16), (14, 6)))
                 elif k =='bonfire':
                     self.bonfires.append(Bonfire(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size)))
-        for k in self.tilemap.animated_layers:
-            for v in self.tilemap.animated_layers[k]['positions']:
-                # TODO handle animated layers
-                pass
+                else:
+                    self.animated_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size)))
                     
 
         self.ui = UI(self, self.player, self.player.equipped_melee, self.player.equipped_spell)
 
         # Get all light objects
-        self.lights = []
-        self.lamp_particle_spawners = []
         for light in self.tilemap.extract([('light', 0)], keep=True):
             self.lights.append(Light(self, light['pos']))
             self.lamp_particle_spawners.append(pygame.rect.Rect(light['pos'][0], light['pos'][1], 16, 16))
-
-        # Get all projectiless
-        self.projectiles = []
-        self.particles = []
 
         # Main Game Loop
         while True:
@@ -140,13 +142,15 @@ class Game:
 
             for bonfire in self.bonfires:
                 bonfire.update()
+
+            for animated in self.animated_objects:
+                animated.update()
             
             
             # RENDERING
             # Collect all tiles and objects to be rendered
             self.render_order_objects = []
             self.render_objects = []
-            self.animated_objects = []
 
             # Add all tiles from the tilemap
             for tile in self.all_tiles:
@@ -157,15 +161,12 @@ class Game:
                 tile_pos = (tile['pos'][0] * self.tilemap.tile_size, tile['pos'][1] * self.tilemap.tile_size)
                 self.render_objects.append((tile, tile_pos[1]))
 
-            for tile in self.tilemap.animated_layers:
-                pass
-
             # Add player to render list
-            self.render_order_objects.append((self.player, self.player.pos[1]))
+            self.render_order_objects.append((self.player, self.player.pos[1] - 8))
 
             # Add enemies to render list
             for enemy in self.enemies:
-                self.render_order_objects.append((enemy, enemy.pos[1]))
+                self.render_order_objects.append((enemy, enemy.pos[1] - 8))
 
             for bonfire in self.bonfires:
                 self.render_order_objects.append((bonfire, bonfire.pos[1]))
@@ -175,6 +176,9 @@ class Game:
                     self.projectiles.remove(projectile)
                 else:
                     self.render_order_objects.append((projectile, projectile.pos[1]))
+            
+            for animated in self.animated_objects:
+                self.render_order_objects.append((animated, animated.pos[1]))
 
             # Sort all render objects by their y-coordinate (top-down order)
             self.render_order_objects.sort(key=lambda obj: obj[1])
@@ -193,8 +197,14 @@ class Game:
                     obj.render(self.display, offset=render_scroll)
                 elif isinstance(obj, Bonfire):
                     obj.render(self.display, offset=render_scroll)
+                elif isinstance(obj, Animated):
+                    obj.render(self.display, offset=render_scroll)
                 elif isinstance(obj, dict):
                     self.tilemap.render_tile(self.display, obj, offset=render_scroll)
+
+            # Render Interact Key Floater
+            for bonfire in self.player.nearby_bonfire_objects:
+                bonfire.render_interact(self.display, offset=render_scroll)
 
             
             
@@ -254,6 +264,9 @@ class Game:
                         self.player.melee()
                     if event.key == pygame.K_e: 
                         self.player.cast_spell()
+                    # TODO bonfire interact
+                    if event.key == pygame.K_f:
+                        self.player.update_spawn()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
                         self.movement_x[0] = False
@@ -263,6 +276,7 @@ class Game:
                         self.movement_y[0] = False
                     if event.key == pygame.K_DOWN:
                         self.movement_y[1] = False
+                
 
             # Update the display
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
