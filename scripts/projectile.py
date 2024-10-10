@@ -1,5 +1,6 @@
 import pygame
 import math
+from scripts.light import Light
 
 class Projectile:
     def __init__(self, game, p_type, pos, velocity=[0, 0], frame=0, size=None):
@@ -54,6 +55,7 @@ class FireballSpell(Projectile):
             super().__init__(game, 'fireballspell_vertical', (game.player.pos[0] + 8, pos[1]), velocity, size=(20, 20))
         else:
             super().__init__(game, 'fireballspell_horizontal', pos, velocity, size=(20, 20))
+        self.light = Light(self.game, (pos[0] + 8, pos[1] + 8))
         self.knockback_strength = 5  # Specify the fireball knockback strength
         self.max_distance = 10 * 16  # Maximum distance (15 tiles, each 16 pixels)
         self.distance_traveled = 0
@@ -67,11 +69,15 @@ class FireballSpell(Projectile):
         self.explosion_damage = 10  # Damage dealt by the explosion
 
     def update(self):
+        if self.light in self.game.lights:
+            self.game.lights.remove(self.light)
         if self.exploding:
             self.explosion_duration -= 1
             if self.explosion_duration <= 0:
                 return True  # End the fireball after the explosion
             self.animation.update()
+            self.light = Light(self.game, (self.pos[0]- 8, self.pos[1]- 8))
+            self.game.lights.append(self.light)
             self.check_explosion_collision()
             return False
         
@@ -88,6 +94,8 @@ class FireballSpell(Projectile):
             return False
 
         self.animation.update()
+        self.light = Light(self.game, (self.pos[0]- 8, self.pos[1]- 8))
+        self.game.lights.append(self.light)
         return False
 
     def explode(self):

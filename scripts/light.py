@@ -1,9 +1,12 @@
 import pygame
 
+# TODO Add size input parameter
 class Light:
     def __init__(self, game, pos):
         self.game = game
         self.pos = pos
+
+        # self.size = size
 
         # Create a light mask with a gradient (100x100 size for a 50-pixel radius light)
         self.light_mask = pygame.Surface((100, 100), pygame.SRCALPHA)

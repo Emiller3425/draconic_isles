@@ -166,7 +166,8 @@ class Player(PhysicsEntity):
         self.knockback_direction = None
 
     def update_spawn(self):
-        self.spawn_point = [self.nearby_bonfire_objects[0].pos[0] + 8, self.nearby_bonfire_objects[0].pos[1] + 24]
+        if len(self.nearby_bonfires) > 0:
+            self.spawn_point = [self.nearby_bonfire_objects[0].pos[0] + 8, self.nearby_bonfire_objects[0].pos[1] + 32]
     
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
 
@@ -183,10 +184,7 @@ class Player(PhysicsEntity):
         self.nearby_bonfires = self.game.tilemap.bonfires_around((self.pos[0] + self.physics_offset_x, self.pos[1] + self.physics_offset_y), self.physics_hitbox).copy()
         for bonfire in self.game.bonfires:
             if bonfire.pos in self.nearby_bonfires:
-                self.nearby_bonfire_objects.append(bonfire)
-
-        # TODO handle save on nearby bonfires
-        
+                self.nearby_bonfire_objects.append(bonfire)   
 
         # Update melee attack duration
         if self.melee_hitbox is not None:
