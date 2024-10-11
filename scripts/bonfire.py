@@ -13,7 +13,7 @@ class Bonfire:
         self.anim_offset = (0,0)
         self.flip = False
         self.animation = self.game.assets['bonfire/animation'].copy()  # Load the bonfire animation
-        self.game.lights.append(Light(self.game, (pos[0] + 8, pos[1] + 8)))
+        self.game.lights.append(Light(self.game, (pos[0] + 8, pos[1] + 8), 50, [50, 20, 0]))
 
     def update(self):
         self.animation.update()  # Update the animation each frame

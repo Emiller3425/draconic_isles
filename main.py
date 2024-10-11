@@ -124,7 +124,7 @@ class Game:
 
         # Get all light objects
         for light in self.tilemap.extract([('light', 0)], keep=True):
-            self.lights.append(Light(self, light['pos']))
+            self.lights.append(Light(self, light['pos'], 20, [20, 20, 0]))
             self.lamp_particle_spawners.append(pygame.rect.Rect(light['pos'][0], light['pos'][1], 16, 16))
 
         # Main Game Loop
