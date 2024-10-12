@@ -21,7 +21,7 @@ class Weather:
         self.flash_duration = 0
         self.raindrops = Raindrops(load_images('precipitation/rain'), count=100)
         self.snow = Snow(load_images('precipitation/snow'), count=400)
-        self.current_weather = 'clear' # 'clear', 'rain', 'thunderstorm', 'snow'
+        self.current_weather = 'thunderstorm' # 'clear', 'rain', 'thunderstorm', 'snow'
 
         self.night_overlay = pygame.Surface(self.game.display.get_size(), pygame.SRCALPHA)
 

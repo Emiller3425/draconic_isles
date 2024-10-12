@@ -37,6 +37,7 @@ class Game:
             'ground': load_images('ground/'),
             'light': load_images('light/'),
             'tree': load_images('tree/'),
+            'bridge': load_images('bridge'),
             'tree/animation' :  Animation(load_images('tree/animation'), img_dur=60),
             'bush': load_images('bush/'),
             'bush/animation' :  Animation(load_images('bush/animation'), img_dur=60),
@@ -66,6 +67,10 @@ class Game:
             'particles/lamp_particle': Animation(load_images('particles/lamp_particle/'), img_dur=random.randint(5, 30), loop=False),
             'bonfire': load_images('bonfire/'),
             'bonfire/animation': Animation(load_images('bonfire/animation'), img_dur=8),
+            'water': load_images('water/'),
+            'water/animation' : Animation(load_images('water/animation'), img_dur=20),
+            'lava': load_images('lava/'),
+            'lava/animation' : Animation(load_images('lava/animation'), img_dur=20),
             'f_key': load_image('keys/f_key/0.png'),
         }
 
@@ -99,6 +104,7 @@ class Game:
         # Initilize all entities
         self.enemies = []
         self.bonfires = []
+        self.animated_physics_objects = []
         self.animated_objects = []
         self.lights = []
         self.lamp_particle_spawners = []
@@ -106,7 +112,7 @@ class Game:
         self.projectiles = []
         self.particles = []
 
-
+        # Animated physics objects
         for k in self.tilemap.object_layers:
             for v in self.tilemap.object_layers[k]['positions']:
                 if k == 'player':
@@ -117,7 +123,14 @@ class Game:
                 elif k =='bonfire':
                     self.bonfires.append(Bonfire(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size)))
                 else:
-                    self.animated_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size)))
+                    self.animated_physics_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size)))
+        # Animated objects
+        for k in self.tilemap.animated_layers:
+            for v in self.tilemap.animated_layers[k]['positions']:
+                self.animated_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size)))
+                if k =='lava':
+                    self.lights.append(Light(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), 25, [70, 20, 0]))
+
                     
 
         self.ui = UI(self, self.player, self.player.equipped_melee, self.player.equipped_spell)
@@ -145,6 +158,9 @@ class Game:
 
             for animated in self.animated_objects:
                 animated.update()
+
+            for animated in self.animated_physics_objects:
+                animated.update()
             
             
             # RENDERING
@@ -152,11 +168,12 @@ class Game:
             self.render_order_objects = []
             self.render_objects = []
 
-            # Add all tiles from the tilemap
+            # Add y-ordered tiles to ordered render list
             for tile in self.all_tiles:
                 tile_pos = (tile['pos'][0] * self.tilemap.tile_size, tile['pos'][1] * self.tilemap.tile_size)
                 self.render_order_objects.append((tile, tile_pos[1]))
             
+            # Add tiles to always be rendered first to list
             for tile in self.non_ordered_tiles:
                 tile_pos = (tile['pos'][0] * self.tilemap.tile_size, tile['pos'][1] * self.tilemap.tile_size)
                 self.render_objects.append((tile, tile_pos[1]))
@@ -177,15 +194,25 @@ class Game:
                 else:
                     self.render_order_objects.append((projectile, projectile.pos[1]))
             
-            for animated in self.animated_objects:
+            for animated in self.animated_physics_objects:
                 self.render_order_objects.append((animated, animated.pos[1]))
 
             # Sort all render objects by their y-coordinate (top-down order)
             self.render_order_objects.sort(key=lambda obj: obj[1])
 
-            # Render all non-ordered tiles first
+            # Render all non-ordered tiles not bridge
             for obj, _ in self.render_objects:
-                self.tilemap.render_tile(self.display, obj, offset=render_scroll)
+                if obj['type'] != 'bridge':
+                    self.tilemap.render_tile(self.display, obj, offset=render_scroll)
+
+            # render animated objects
+            for animated in self.animated_objects:
+                animated.render(self.display, offset=render_scroll)
+
+            # render bridges
+            for obj, _ in self.render_objects:
+                if obj['type'] == 'bridge':
+                    self.tilemap.render_tile(self.display, obj, offset=render_scroll)
 
             # Render all objects in sorted order
             for obj, _ in self.render_order_objects:

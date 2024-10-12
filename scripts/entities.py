@@ -131,6 +131,7 @@ class Player(PhysicsEntity):
         self.max_stamina = 100
         self.mana = 100
         self.max_mana = 100
+        self.current_souls = 0
         self.melee_hitbox = None
         self.image = self.game.assets['player']
         self.equipped_melee = 'basic_sword'

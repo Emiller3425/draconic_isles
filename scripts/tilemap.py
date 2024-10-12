@@ -1,6 +1,7 @@
 import pygame
 import pytmx
 import copy
+import sys
 
 NEIGHBORS_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1), (0, 1), (1, 1)]
 PHYSICS_TILE_TYPES = {
@@ -8,7 +9,9 @@ PHYSICS_TILE_TYPES = {
     'bush', 
     'light', 
     'tree',
-    'bonfire'
+    'bonfire',
+    'water',
+    'lava',
     }
 
 PHYSICS_TILE_HITBOXES = {
@@ -16,6 +19,9 @@ PHYSICS_TILE_HITBOXES = {
         0: (16, 16),
         1: (16, 16),
         2: (16, 16),
+        3: (16, 16),
+        4: (16, 16),
+        5: (16, 16),
     },
     'bush': {
         0: (12, 12),
@@ -34,11 +40,23 @@ PHYSICS_TILE_HITBOXES = {
         1: (0, 0),
         2: (8, 14),
         3: (8, 14),
+    },
+    'water': {
+        0: (16, 20),
+    },
+    'lava': {
+        0: (16, 20),
     }
+}
+
+NEGATE_PHYSICS_LAYERS = {
+    'bridge'
 }
 
 NON_ORDER_TILES = {
     'ground',
+    'bridge',
+    # 'bush'
     }
 
 # INTRERACTABLE_TILE_TYPES = {'ladder'}
@@ -51,13 +69,23 @@ class Tilemap:
         self.tilemap_layer_data_values = {}
         # Dict used for drawable objects, animated objects, and large objects (larger than 16x16)
         self.object_layers = {
+            # Functional Objects
             'player' : {'positions': [], 'variants': []},
             'skeleton' : {'positions': [], 'variants': []},
             'bonfire' : {'positions': [], 'variants': []},
-            # Animation Objects
-            'bush' : {'positions': [], 'variants': []},
+            # Animation Physics Objects
+            # 'water' : {'positions': [], 'variants': []},
+            # 'lava' : {'positions': [], 'variants': []},
+            # 'bush' : {'positions': [], 'variants': []},
             'tree' : {'positions': [], 'variants': []},
         }
+
+        self.animated_layers = {
+            # 'bush' : {'positions': [], 'variants': []},
+            'water' : {'positions': [], 'variants': []},
+            'lava' : {'positions': [], 'variants': []},
+        }
+
         self.offgrid_tiles = []
         self.player_position = (0, 0)
         self.enemy_positions = []
@@ -79,6 +107,7 @@ class Tilemap:
                     self.tilemap_layer_data_values[layer.name].append(layer.data[y][x])
 
         self.temp_object_layers = copy.deepcopy(self.object_layers)
+        self.temp_animated_layers = copy.deepcopy(self.animated_layers)
         
         # Match value within the layer to the variant that is the corresponding index of the layer
         for layer_index, layer in enumerate(self.tmx_data.visible_layers):
@@ -93,24 +122,38 @@ class Tilemap:
                         if layer.name == k:
                             self.temp_object_layers[k]['positions'].append((x,y))
                             self.temp_object_layers[k]['variants'].append(self.tilemap_layer_data_values[layer.name].index(layer.data[y][x]))
+                    for k in self.temp_animated_layers:
+                        if layer.name == k:
+                            self.temp_animated_layers[k]['positions'].append((x,y))
+                            self.temp_animated_layers[k]['variants'].append(self.tilemap_layer_data_values[layer.name].index(layer.data[y][x]))
 
-        variants = self.get_top_left_most_variants()
+
+        physics_variants = self.get_top_left_most_variants(self.temp_object_layers)
+        # TODO animation objects that are non-physics need to be rendered under player always
+        animated_variants = self.get_top_left_most_variants(self.temp_animated_layers)
         
         for k1 in self.temp_object_layers:
-            for k2 in variants:
+            for k2 in physics_variants:
                 if k1 == k2:
                     for i in range(0, len(self.temp_object_layers[k1]['variants'])):
-                        if variants[k2][0] == self.temp_object_layers[k1]['variants'][i]:
+                        if physics_variants[k2][0] == self.temp_object_layers[k1]['variants'][i]:
                             self.object_layers[k1]['positions'].append(self.temp_object_layers[k1]['positions'][i])
         
-    def get_top_left_most_variants(self):
+        for k1 in self.temp_animated_layers:
+            for k2 in animated_variants:
+                if k1 == k2:
+                    for i in range(0, len(self.temp_animated_layers[k1]['variants'])):
+                        if animated_variants[k2][0] == self.temp_animated_layers[k1]['variants'][i]:
+                            self.animated_layers[k1]['positions'].append(self.temp_animated_layers[k1]['positions'][i])
+        
+    def get_top_left_most_variants(self, dict):
         top_left_positions = {}
         top_left_variants = {}
-        for k in self.temp_object_layers:
+        for k in dict:
             top_left_pos = None
-            for v in self.temp_object_layers[k]:
+            for v in dict[k]:
                 if v != 'variants':
-                    for i in self.temp_object_layers[k][v]:
+                    for i in dict[k][v]:
                         if top_left_pos == None:
                             top_left_pos = i
                         elif top_left_pos[1] > i[1]:
@@ -119,9 +162,9 @@ class Tilemap:
                             top_left_pos = i
                     top_left_positions[k] = []
                     top_left_positions[k].append(top_left_pos)
-                    top_left_index = self.temp_object_layers[k][v].index(top_left_positions[k][0])
+                    top_left_index = dict[k][v].index(top_left_positions[k][0])
                     top_left_variants[k] = []
-                    y = self.temp_object_layers[k]['variants'][top_left_index]
+                    y = dict[k]['variants'][top_left_index]
                     top_left_variants[k] = []
                     top_left_variants[k].append(y)
                                   
@@ -227,26 +270,42 @@ class Tilemap:
         :return: List of pygame.Rect representing the physics collision boxes.
         """
         rects = []
+        ignore_physics_rects = []
         # Calculate the number of tiles the entity covers
-        start_tile_x = int(pos[0] // self.tile_size)
-        end_tile_x = int((pos[0] + entity_size[0]) // self.tile_size) + 1
-        start_tile_y = int(pos[1] // self.tile_size)
-        end_tile_y = int((pos[1] + entity_size[1]) // self.tile_size) + 1
+        start_tile_x = int(pos[0] // self.tile_size) - 2
+        end_tile_x = int((pos[0] + entity_size[0]) // self.tile_size) + 2
+        start_tile_y = int(pos[1] // self.tile_size) - 2
+        end_tile_y = int((pos[1] + entity_size[1]) // self.tile_size) + 2
 
         for x in range(start_tile_x, end_tile_x):
             for y in range(start_tile_y, end_tile_y):
                 check_loc = f"{x};{y}"
                 if check_loc in self.tilemap:
                     for tile in self.tilemap[check_loc]:
-                       # Exclude tiles based on their type and variant
-                        if tile['type'] in PHYSICS_TILE_TYPES:
+                        if tile['type'] in NEGATE_PHYSICS_LAYERS:
+                            ignore_physics_rects.append((x, y))
+
+        for x in range(start_tile_x, end_tile_x):
+            for y in range(start_tile_y, end_tile_y):
+                check_loc = f"{x};{y}"
+                if check_loc in self.tilemap:
+                    for tile in self.tilemap[check_loc]:
+                        if tile['type'] in PHYSICS_TILE_TYPES and (x, y) not in ignore_physics_rects:
                             width, height = PHYSICS_TILE_HITBOXES.get(tile['type'], {}).get(tile['variant'], (self.tile_size, self.tile_size))
-                            rect = pygame.Rect(
-                                tile['pos'][0] * self.tile_size + ((self.tile_size - width) / 2),
-                                tile['pos'][1] * self.tile_size + ((self.tile_size - height) / 2),
-                                width,
-                                height
-                            )
+                            if tile['type'] == 'water' or tile['type'] == 'lava':
+                                rect = pygame.Rect(
+                                    tile['pos'][0] * self.tile_size + ((self.tile_size - width) / 2),
+                                    tile['pos'][1] * self.tile_size + ((self.tile_size - height) / 2) - 4,
+                                    width,
+                                    height
+                                )
+                            else:
+                                rect = pygame.Rect(
+                                    tile['pos'][0] * self.tile_size + ((self.tile_size - width) / 2),
+                                    tile['pos'][1] * self.tile_size + ((self.tile_size - height) / 2),
+                                    width,
+                                    height
+                                )
                             rects.append(rect)
         return rects
     
@@ -310,7 +369,7 @@ class Tilemap:
         deferred_tiles = None # tile_type == 'tree' and variant in [0, 1]
 
         # Render all non-deferred tiles
-        if not deferred_tiles and tile_type not in self.object_layers:
+        if not deferred_tiles and tile_type not in self.object_layers and tile_type not in self.animated_layers:
             # Only render tiles within the screen bounds
             if (-16 <= x_pos < surf.get_width() + 16) and (-16 <= y_pos < surf.get_height() + 16):
                 surf.blit(

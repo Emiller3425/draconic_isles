@@ -76,7 +76,7 @@ class FireballSpell(Projectile):
             if self.explosion_duration <= 0:
                 return True  # End the fireball after the explosion
             self.animation.update()
-            self.light = Light(self.game, (self.pos[0]- 8, self.pos[1]- 8), 50, [50, 20, 0])
+            self.light = Light(self.game, (self.pos[0]- 8, self.pos[1]- 8), 25, [50, 20, 0])
             self.game.lights.append(self.light)
             self.check_explosion_collision()
             return False
@@ -94,7 +94,7 @@ class FireballSpell(Projectile):
             return False
 
         self.animation.update()
-        self.light = Light(self.game, (self.pos[0]- 8, self.pos[1]- 8), 30, [50, 20, 0])
+        self.light = Light(self.game, (self.pos[0]- 8, self.pos[1]- 8), 20, [50, 20, 0])
         self.game.lights.append(self.light)
         return False
 
