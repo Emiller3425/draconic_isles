@@ -67,19 +67,18 @@ class Tilemap:
         self.game = game
         self.tilemap = {}
         self.tilemap_layer_data_values = {}
-        # Dict used for drawable objects, animated objects, and large objects (larger than 16x16)
+        # Dict used for drawable objects, animated objects, and large objects (larger than 16x16) rendered in y-sort order
         self.object_layers = {
             # Functional Objects
             'player' : {'positions': [], 'variants': []},
             'skeleton' : {'positions': [], 'variants': []},
             'bonfire' : {'positions': [], 'variants': []},
             # Animation Physics Objects
-            # 'water' : {'positions': [], 'variants': []},
-            # 'lava' : {'positions': [], 'variants': []},
-            # 'bush' : {'positions': [], 'variants': []},
+            'bush' : {'positions': [], 'variants': []},
             'tree' : {'positions': [], 'variants': []},
         }
 
+        # Always rendered under the player, non-sroted animated tiles
         self.animated_layers = {
             # 'bush' : {'positions': [], 'variants': []},
             'water' : {'positions': [], 'variants': []},
