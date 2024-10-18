@@ -1,6 +1,8 @@
 import pygame
 import re
 import os
+import copy
+import random
 
 BASE_IMG_PATH = "graphics/"
 

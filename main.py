@@ -14,6 +14,7 @@ from scripts.projectile import Projectile, FireballSpell
 from scripts.weather import Weather
 from scripts.bonfire import Bonfire
 from scripts.animated import Animated
+from scripts.drop import Drop
 
 
 class Game:
@@ -31,16 +32,22 @@ class Game:
         self.movement_y = [False, False]
 
         self.assets = {
+            'title_screen': load_image('screens/title_screen.png'),
             'player': load_images('player/'),
             'skeleton': load_images('skeleton/'),
             'walls': load_images('walls/'),
             'ground': load_images('ground/'),
             'light': load_images('light/'),
             'tree': load_images('tree/'),
-            'bridge': load_images('bridge'),
             'tree/animation' :  Animation(load_images('tree/animation'), img_dur=60),
+            'bridge': load_images('bridge'),
             'bush': load_images('bush/'),
-            'bush/animation' :  Animation(load_images('bush/animation'), img_dur=60),
+            'bush/animation' :  Animation(load_images('bush/animation'), img_dur=30),
+            'rock': load_images('rock/'),
+            'red_flower' : load_images('flowers/red_flower'),
+            'red_flower/animation' :  Animation(load_images('flowers/red_flower/animation'), img_dur=30),
+            'purple_flower' : load_images('flowers/purple_flower'),
+            'purple_flower/animation' :  Animation(load_images('flowers/purple_flower/animation'), img_dur=30),
             'player/idle_down': Animation(load_images('player/idle/idle_down'), img_dur=25),
             'player/idle_up': Animation(load_images('player/idle/idle_up'), img_dur=25),
             'player/idle_horizontal': Animation(load_images('player/idle/idle_horizontal'), img_dur=25),
@@ -57,6 +64,7 @@ class Game:
             'minor_enemy_health_bar': load_image('ui/minor_enemy_health_bar.png'),
             'equipped_melee_card' : load_image('ui/equipped_melee_card.png'),
             'equipped_spell_card' : load_image('ui/equipped_spell_card.png'),
+            'soul_counter_card' : load_image('ui/soul_counter_card.png'),
             'basic_sword' : load_image('weapons/swords/basic_sword/basic_sword.png'),
             'basic_sword_vertical' : load_image('weapons/swords/basic_sword/basic_sword_vertical.png'),
             'basic_sword_horizontal' : load_image('weapons/swords/basic_sword/basic_sword_horizontal.png'),
@@ -64,14 +72,16 @@ class Game:
             'fireballspell_horizontal' : Animation(load_images('spells/damage/fireball/traveling_horizontal'), img_dur=8),
             'fireballspell_vertical' : Animation(load_images('spells/damage/fireball/traveling_vertical'), img_dur=8),
             'fireballspell_impact' : Animation(load_images('spells/damage/fireball/impact'), img_dur=2),
-            'particles/lamp_particle': Animation(load_images('particles/lamp_particle/'), img_dur=random.randint(5, 30), loop=False),
+            'particles/lamp_particle': Animation(load_images('particles/lamp_particle/'), img_dur=10, loop=False),
+            'particles/smoke_particle': Animation(load_images('particles/smoke_particle/'), img_dur=40, loop=False),
             'bonfire': load_images('bonfire/'),
             'bonfire/animation': Animation(load_images('bonfire/animation'), img_dur=8),
             'water': load_images('water/'),
-            'water/animation' : Animation(load_images('water/animation'), img_dur=20),
+            'water/animation' : Animation(load_images('water/animation'), img_dur=10),
             'lava': load_images('lava/'),
             'lava/animation' : Animation(load_images('lava/animation'), img_dur=20),
             'f_key': load_image('keys/f_key/0.png'),
+            'digits' : load_images('digits')
         }
 
 
@@ -101,16 +111,26 @@ class Game:
         # self.flash_surface = pygame.Surface(self.display.get_size())  # Surface for the flash effect
         # self.flash_surface.fill((255, 255, 255))  # White flash effect
 
-        # Initilize all entities
+        # Enemies
         self.enemies = []
+        # Bonfires
         self.bonfires = []
+        # Y-sorted animatied objects
         self.animated_physics_objects = []
+        # Rendred first animated objects
         self.animated_objects = []
+        # lights
         self.lights = []
+        # lamp particle spawners
         self.lamp_particle_spawners = []
+        # smoke particle spawners
+        self.smoke_particle_spawners = []
         # Get all projectiless
         self.projectiles = []
+        # Get Particles
         self.particles = []
+        # drops
+        self.drops = []
 
         # Animated physics objects
         for k in self.tilemap.object_layers:
@@ -123,11 +143,14 @@ class Game:
                 elif k =='bonfire':
                     self.bonfires.append(Bonfire(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size)))
                 else:
-                    self.animated_physics_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size)))
+                    self.animated_physics_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), frame = 0))
         # Animated objects
         for k in self.tilemap.animated_layers:
             for v in self.tilemap.animated_layers[k]['positions']:
-                self.animated_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size)))
+                if 'flower' in k:
+                    self.animated_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), frame = random.randint(0, len(self.assets[k+'/animation'].images))))
+                else:
+                    self.animated_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), frame = 0))
                 if k =='lava':
                     self.lights.append(Light(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), 25, [70, 20, 0]))
 
@@ -139,6 +162,9 @@ class Game:
         for light in self.tilemap.extract([('light', 0)], keep=True):
             self.lights.append(Light(self, light['pos'], 20, [20, 20, 0]))
             self.lamp_particle_spawners.append(pygame.rect.Rect(light['pos'][0], light['pos'][1], 16, 16))
+        
+        for bonfire in self.bonfires:
+            self.smoke_particle_spawners.append(pygame.rect.Rect(bonfire.pos[0] + 8, bonfire.pos[1] - 18, 16, 16))
 
         # Main Game Loop
         while True:
@@ -255,6 +281,11 @@ class Game:
                     pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
                     self.particles.append(Particle(self, 'lamp_particle', pos, velocity=[-0.15, 0.3], frame=random.randint(0, 10)))
 
+            for rect in self.smoke_particle_spawners:
+                if random.random() < 0.5:
+                    pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
+                    self.particles.append(Particle(self, 'smoke_particle', pos, velocity=[0, -0.2], frame=random.randint(0, 10)))
+
 
             # animate and render particles
             for particle in self.particles.copy():
@@ -263,6 +294,8 @@ class Game:
                 if isinstance(particle, Particle) and particle.type == 'lamp_particle':
                     particle.pos[0] += math.sin(random.random()) * 0.3
                     particle.pos[1] += math.sin(random.random()) * 0.3
+                elif isinstance(particle, Particle) and particle.type == 'smoke_particle':
+                     particle.pos[0] += math.sin(random.random()) * 0.7 * random.randint(-1, 1)
                 if kill:
                     self.particles.remove(particle)
 
@@ -293,7 +326,7 @@ class Game:
                         self.player.cast_spell()
                     # TODO bonfire interact
                     if event.key == pygame.K_f:
-                        self.player.update_spawn()
+                        self.player.rest_at_bonfire()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
                         self.movement_x[0] = False
@@ -307,6 +340,8 @@ class Game:
 
             # Update the display
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
+            # title screen
+            # self.screen.blit(pygame.transform.scale(self.assets['title_screen'], self.screen.get_size()), (0,0))
             pygame.display.update()
             self.clock.tick(60)
 

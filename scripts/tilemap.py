@@ -3,7 +3,10 @@ import pytmx
 import copy
 import sys
 
+# 9 Nearby tiles
 NEIGHBORS_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1), (0, 1), (1, 1)]
+
+# Physics tile types
 PHYSICS_TILE_TYPES = {
     'walls', 
     'bush', 
@@ -14,6 +17,7 @@ PHYSICS_TILE_TYPES = {
     'lava',
     }
 
+# Hitboxes for physics objects
 PHYSICS_TILE_HITBOXES = {
     'walls': {
         0: (16, 16),
@@ -42,21 +46,23 @@ PHYSICS_TILE_HITBOXES = {
         3: (8, 14),
     },
     'water': {
-        0: (16, 20),
+        0: (14, 20),
     },
     'lava': {
-        0: (16, 20),
+        0: (14, 20),
     }
 }
 
+# If over a physics layer tile will negate the physcis
 NEGATE_PHYSICS_LAYERS = {
     'bridge'
 }
 
+# Non-animated
 NON_ORDER_TILES = {
     'ground',
     'bridge',
-    # 'bush'
+    'rock',
     }
 
 # INTRERACTABLE_TILE_TYPES = {'ladder'}
@@ -74,15 +80,16 @@ class Tilemap:
             'skeleton' : {'positions': [], 'variants': []},
             'bonfire' : {'positions': [], 'variants': []},
             # Animation Physics Objects
-            'bush' : {'positions': [], 'variants': []},
+            # 'bush' : {'positions': [], 'variants': []},
             'tree' : {'positions': [], 'variants': []},
         }
 
-        # Always rendered under the player, non-sroted animated tiles
+        # Always rendered under the player, non y-sorted animated tiles
         self.animated_layers = {
-            # 'bush' : {'positions': [], 'variants': []},
             'water' : {'positions': [], 'variants': []},
             'lava' : {'positions': [], 'variants': []},
+            'red_flower': {'positions': [], 'variants': []},
+            'purple_flower': {'positions': [], 'variants': []},
         }
 
         self.offgrid_tiles = []

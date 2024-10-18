@@ -1,13 +1,19 @@
 import pygame
+import random
 
 class Animated:
-    def __init__(self, game, type, pos):
+    def __init__(self, game, type, pos, frame):
         self.game = game
         self.pos = pos
         self.anim_offset = (0,0)
         self.flip = False
         self.type = type
         self.animation = self.game.assets[self.type + '/animation'].copy()  # Load the bonfire animation
+        # Randomize starting frame for certain animated objects
+        self.frame = frame
+        # Start the animation at the randomized frame
+        self.animation.frame = self.frame * self.animation.img_duration
+            
 
     def update(self):
         self.animation.update()  # Update the animation each frame

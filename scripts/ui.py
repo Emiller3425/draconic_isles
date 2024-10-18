@@ -13,8 +13,10 @@ class UI:
         self.minor_enemy_health_bar_image = game.assets['minor_enemy_health_bar']
         self.equipped_melee_card = game.assets['equipped_melee_card']
         self.equipped_spell_card = game.assets['equipped_spell_card']
+        self.soul_counter_card = game.assets['soul_counter_card']
         self.equipped_player_melee = equipped_player_melee
         self.equipped_player_spell = equipped_player_spell
+        self.digits = game.assets['digits']
 
 
         # Define the colors for each attribute bar
@@ -60,6 +62,9 @@ class UI:
         
         # Render equipped cards in the bottom right corner
         self.render_equipped_cards(surf)
+
+        # Render Soul Counter
+        self.render_souls(surf, self.player)
 
     def render_bar(self, surf, attribute, current, maximum):
         # Calculate the percentage to display
@@ -158,3 +163,36 @@ class UI:
     def render_boss_health_bar(self, surf, boss):
         # TODO Implement boss health bar rendering when we get here hopefully by thanksgiving
         pass
+
+    def render_souls(self, surf, player):
+        # TODO Implement loop to render the increase so you can see it tick up on enemy kill instaed of instantly changing
+
+        # Shift for each digit rendering
+        left_shift = 0
+        
+        # Max number that can be displayed on the soul counter card
+        if player.souls > 9999999999:
+            display_souls = "9999999999"
+        else:
+            display_souls = str(player.souls)
+
+        # Get screen size for rendering
+        screen_width, screen_height = surf.get_size()
+
+        # Get position to render soul_counter_card
+        soul_counter_card_postition = (screen_width - self.soul_counter_card.get_width() - 5, screen_height - self.soul_counter_card.get_height() - 5)
+
+        # Render the empty soul_counter_card
+        surf.blit(self.soul_counter_card, soul_counter_card_postition)
+
+        # Empty string to hold the revered string of souls
+        reversed_display_souls = ""
+
+        # Reverse the string for rendering because we render left --> right in the soul_counter_card
+        for i in range(0, len(display_souls)):
+            reversed_display_souls += display_souls[len(display_souls)-i-1]
+
+        # Loop through and print digits
+        for i in reversed_display_souls:
+            surf.blit(self.digits[int(i)], (soul_counter_card_postition[0] + 40 - left_shift, soul_counter_card_postition[1] + 6))
+            left_shift += 4

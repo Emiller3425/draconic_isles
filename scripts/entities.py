@@ -2,6 +2,7 @@ import pygame
 import random
 import asyncio
 import sys
+from scripts.drop import Drop
 from scripts.tilemap import Tilemap
 from scripts.projectile import Projectile, FireballSpell
 import numpy as np
@@ -25,6 +26,7 @@ class PhysicsEntity:
         self.anim_offset = (0, 0)
         self.flip = False
         self.is_facing = 'down'
+        self.souls = 0
         self.set_action('idle_down')
     
     def damage_rect(self):
@@ -166,9 +168,12 @@ class Player(PhysicsEntity):
         self.knockback_remaining = 0
         self.knockback_direction = None
 
-    def update_spawn(self):
+    def rest_at_bonfire(self):
         if len(self.nearby_bonfires) > 0:
             self.spawn_point = [self.nearby_bonfire_objects[0].pos[0] + 8, self.nearby_bonfire_objects[0].pos[1] + 32]
+            self.health = self.max_health
+            self.stamina = self.max_stamina
+            self.mana = self.max_mana
     
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
 
@@ -217,6 +222,8 @@ class Player(PhysicsEntity):
             self.die()
 
     def die(self):
+        # souls = Drop(self, self.game, 'soul', self.pos)
+        # TODO set player souls to 0
         self.pos = self.spawn_point.copy()
         self.health = self.max_health
         self.stamina = self.max_stamina
@@ -503,6 +510,7 @@ class Enemy(PhysicsEntity):
 
     def die(self):
         self.game.enemies.remove(self)
+        self.game.player.souls += 100
 
     def render(self, surf, offset=(0, 0)):
 
