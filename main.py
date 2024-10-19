@@ -30,12 +30,16 @@ class Game:
         self.screen.fill((0, 0, 0))
         self.display = pygame.Surface((360, 280), pygame.SRCALPHA)
         self.clock = pygame.time.Clock()
+        self.show_start_screen = True
 
         self.movement_x = [False, False]
         self.movement_y = [False, False]
 
         self.assets = {
-            'title_screen': load_image('screens/title_screen.png'),
+            'title_screen': load_image('screens/title_screen/0.png'),
+            'title_screen/animation': load_images('screens/title_screen/animation'),
+            'continue_button': load_image('screens/buttons/continue_button.png'),
+            'new_game_button': load_image('screens/buttons/new_game_button.png'),
             'player': load_images('player/'),
             'skeleton': load_images('skeleton/'),
             'walls': load_images('walls/'),
@@ -89,6 +93,10 @@ class Game:
             'drop' : load_image('drops/souls/0.png'),
         }
 
+        self.audio = {
+            # TODO audio lol
+        }
+
 
         # List for deferred rendering
         self.deferred_tiles = []
@@ -97,6 +105,41 @@ class Game:
     # def trigger_lighting(self, duration=80):
     #     self.flash_duration = duration
     #     self.flash_alpha = 150  # Maximum opacity at the start
+
+    def run(self):
+        while True:
+            if self.show_start_screen:
+                self.start_screen() 
+            else:
+                self.main()
+
+    # Handles all logic in the start screen when the game is initially booted up
+    def start_screen(self):
+        self.screen.fill((0, 0, 0))
+        font = pygame.font.SysFont(None, 74)
+        title_text = font.render("Ninja Platformer", True, (255, 255, 255))
+        self.screen.blit(title_text, (self.screen.get_width() // 2 - title_text.get_width() // 2, 100))
+
+        start_font = pygame.font.SysFont(None, 48)
+        start_text = start_font.render("Click to Start", True, (255, 255, 255))
+        self.screen.blit(start_text, (self.screen.get_width() // 2 - start_text.get_width() // 2, 300))
+
+        self.screen.blit(pygame.transform.scale(self.assets['title_screen'], self.screen.get_size()), (0,0))
+
+        self.screen.blit(self.assets['new_game_button'], (self.screen.get_width() // 2 - self.assets['new_game_button'].get_width() // 2, 400))
+
+        self.screen.blit(self.assets['continue_button'], (self.screen.get_width() // 2 - self.assets['continue_button'].get_width() // 2, 450))
+
+        pygame.display.update()
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    self.show_start_screen = False
+                    return
 
     def main(self):
         # Initialize tilemap
@@ -382,10 +425,8 @@ class Game:
 
             # Update the display
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
-            # title screen
-            # self.screen.blit(pygame.transform.scale(self.assets['title_screen'], self.screen.get_size()), (0,0))
             pygame.display.update()
             self.clock.tick(60)
 
 
-Game().main()
+Game().run()
