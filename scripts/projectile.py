@@ -133,6 +133,9 @@ class FireballSpell(Projectile):
                     # knockback_vector = [enemy.pos[0] - self.pos[0], enemy.pos[1] - self.pos[1]]
                     # enemy.apply_knockback(knockback_vector, knockback_strength=self.knockback_strength)  # Apply knockback
                 return True
+        for rect in self.game.tilemap.physics_rects_around((self.pos[0], self.pos[1]), self.size, 'projectile'):
+            if rect.colliderect(self.rect()):
+                return True
         return False
 
     def rect(self):

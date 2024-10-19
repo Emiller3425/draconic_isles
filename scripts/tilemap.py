@@ -266,7 +266,7 @@ class Tilemap:
                 tiles.extend(self.tilemap[check_loc])
         return tiles
     
-    def physics_rects_around(self, pos, entity_size):
+    def physics_rects_around(self, pos, entity_size, obj_type):
         """
         Find all physics-related rectangles around the given position
         considering the size of the entity.
@@ -296,9 +296,11 @@ class Tilemap:
                 check_loc = f"{x};{y}"
                 if check_loc in self.tilemap:
                     for tile in self.tilemap[check_loc]:
+                        if  (tile['type'] == 'water' or tile['type'] == 'lava') and obj_type == 'projectile': 
+                            continue
                         if tile['type'] in PHYSICS_TILE_TYPES and (x, y) not in ignore_physics_rects:
                             width, height = PHYSICS_TILE_HITBOXES.get(tile['type'], {}).get(tile['variant'], (self.tile_size, self.tile_size))
-                            if tile['type'] == 'water' or tile['type'] == 'lava':
+                            if (tile['type'] == 'water' or tile['type'] == 'lava'): 
                                 rect = pygame.Rect(
                                     tile['pos'][0] * self.tile_size + ((self.tile_size - width) / 2),
                                     tile['pos'][1] * self.tile_size + ((self.tile_size - height) / 2) - 4,

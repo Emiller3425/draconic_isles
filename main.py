@@ -74,6 +74,7 @@ class Game:
             'fireballspell_impact' : Animation(load_images('spells/damage/fireball/impact'), img_dur=2),
             'particles/lamp_particle': Animation(load_images('particles/lamp_particle/'), img_dur=10, loop=False),
             'particles/smoke_particle': Animation(load_images('particles/smoke_particle/'), img_dur=40, loop=False),
+            'particles/soul_particle' : Animation(load_images('particles/soul_particle/'), img_dur=40, loop=False),
             'bonfire': load_images('bonfire/'),
             'bonfire/animation': Animation(load_images('bonfire/animation'), img_dur=8),
             'water': load_images('water/'),
@@ -81,7 +82,8 @@ class Game:
             'lava': load_images('lava/'),
             'lava/animation' : Animation(load_images('lava/animation'), img_dur=20),
             'f_key': load_image('keys/f_key/0.png'),
-            'digits' : load_images('digits')
+            'digits' : load_images('digits'),
+            'drop' : load_image('drops/souls/0.png'),
         }
 
 
@@ -125,6 +127,8 @@ class Game:
         self.lamp_particle_spawners = []
         # smoke particle spawners
         self.smoke_particle_spawners = []
+        # drop particle spawners
+        self.drop_particle_spawners = []
         # Get all projectiless
         self.projectiles = []
         # Get Particles
@@ -187,6 +191,13 @@ class Game:
 
             for animated in self.animated_physics_objects:
                 animated.update()
+
+            for drop in self.drops:
+                drop.update()
+                if drop.has_particle_spawner == False:
+                    drop.spawner = pygame.rect.Rect(drop.pos[0] - 4, drop.pos[1] - 8, 8, 8)
+                    self.drop_particle_spawners.append(drop.spawner)
+                    drop.has_particle_spawner = True
             
             
             # RENDERING
@@ -223,6 +234,9 @@ class Game:
             for animated in self.animated_physics_objects:
                 self.render_order_objects.append((animated, animated.pos[1]))
 
+            for drop in self.drops:
+                self.render_order_objects.append((drop, drop.original_pos[1] - 17))
+
             # Sort all render objects by their y-coordinate (top-down order)
             self.render_order_objects.sort(key=lambda obj: obj[1])
 
@@ -252,14 +266,14 @@ class Game:
                     obj.render(self.display, offset=render_scroll)
                 elif isinstance(obj, Animated):
                     obj.render(self.display, offset=render_scroll)
+                elif isinstance(obj, Drop):
+                    obj.render(self.display, offset=render_scroll)
                 elif isinstance(obj, dict):
                     self.tilemap.render_tile(self.display, obj, offset=render_scroll)
 
             # Render Interact Key Floater
             for bonfire in self.player.nearby_bonfire_objects:
                 bonfire.render_interact(self.display, offset=render_scroll)
-
-            
             
             # update weather system
             self.weather_system.update()
@@ -285,6 +299,12 @@ class Game:
                 if random.random() < 0.5:
                     pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
                     self.particles.append(Particle(self, 'smoke_particle', pos, velocity=[0, -0.2], frame=random.randint(0, 10)))
+            
+            for rect in self.drop_particle_spawners:
+                if random.random() < 0.25:
+                    pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
+                    self.particles.append(Particle(self, 'soul_particle', pos, velocity=[0, -0.2], frame=random.randint(0, 10)))
+
 
 
             # animate and render particles
@@ -296,6 +316,8 @@ class Game:
                     particle.pos[1] += math.sin(random.random()) * 0.3
                 elif isinstance(particle, Particle) and particle.type == 'smoke_particle':
                      particle.pos[0] += math.sin(random.random()) * 0.7 * random.randint(-1, 1)
+                elif isinstance(particle, Particle) and particle.type == 'soul_particle':
+                    particle.pos[0] += math.sin(random.uniform(-1,1)) 
                 if kill:
                     self.particles.remove(particle)
 

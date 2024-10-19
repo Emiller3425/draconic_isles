@@ -2,7 +2,7 @@ import pygame
 import random
 import asyncio
 import sys
-from scripts.drop import Drop
+from scripts.drop import Drop, Souls
 from scripts.tilemap import Tilemap
 from scripts.projectile import Projectile, FireballSpell
 import numpy as np
@@ -84,7 +84,8 @@ class PhysicsEntity:
         self.animation.update()
 
     def die(self):
-        pass
+        self.game.enemies.remove(self)
+        self.game.player.souls += self.souls
 
     def melee(self):
         self.melee_attack = True
@@ -101,7 +102,7 @@ class PhysicsEntity:
             
     def handle_collisions(self, direction):
         entity_rect = self.physics_rect()
-        for rect in self.game.tilemap.physics_rects_around((self.pos[0] + self.physics_offset_x, self.pos[1] + self.physics_offset_y), self.physics_hitbox):
+        for rect in self.game.tilemap.physics_rects_around((self.pos[0] + self.physics_offset_x, self.pos[1] + self.physics_offset_y), self.physics_hitbox, 'entity'):
             if entity_rect.colliderect(rect):
                 if direction == 'left':
                     self.collisions['left'] = True
@@ -133,7 +134,7 @@ class Player(PhysicsEntity):
         self.max_stamina = 100
         self.mana = 100
         self.max_mana = 100
-        self.current_souls = 0
+        self.souls = 0
         self.melee_hitbox = None
         self.image = self.game.assets['player']
         self.equipped_melee = 'basic_sword'
@@ -192,6 +193,8 @@ class Player(PhysicsEntity):
             if bonfire.pos in self.nearby_bonfires:
                 self.nearby_bonfire_objects.append(bonfire)   
 
+        # TODO collect souls if dropped and walk over them and then remove that drop and re-add souls to player-souls
+
         # Update melee attack duration
         if self.melee_hitbox is not None:
             self.update_melee_hitbox()
@@ -222,7 +225,11 @@ class Player(PhysicsEntity):
             self.die()
 
     def die(self):
-        # souls = Drop(self, self.game, 'soul', self.pos)
+        self.game.drops.clear()
+        self.game.drop_particle_spawners.clear()
+        if self.souls > 0:
+            self.game.drops.append(Souls(self.game, 'soul', self.pos, self.souls))
+            self.souls = 0
         # TODO set player souls to 0
         self.pos = self.spawn_point.copy()
         self.health = self.max_health
@@ -395,6 +402,7 @@ class Enemy(PhysicsEntity):
         self.knockback_duration = 10
         self.knockback_remaining = 0
         self.knockback_direction = None
+        self.souls = 100
 
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
         if self.knockback_remaining > 0:
@@ -509,8 +517,7 @@ class Enemy(PhysicsEntity):
         self.game.player.apply_knockback(knockback_vector, knockback_strength)
 
     def die(self):
-        self.game.enemies.remove(self)
-        self.game.player.souls += 100
+        super().die()
 
     def render(self, surf, offset=(0, 0)):
 
