@@ -1,6 +1,7 @@
 import pygame
 import random
 import math
+import json
 
 class Precipitation:
     def __init__(self, pos, img, speed, depth):

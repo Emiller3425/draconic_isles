@@ -1,6 +1,6 @@
 import pygame
 import time
-
+import json
 
 class Drop:
     def __init__(self, game, type, pos, tile_size = 16):
@@ -54,7 +54,7 @@ class Souls(Drop):
     def player_pickup(self):
         super().player_pickup()
 
-        if self.distance == [0, 0]:
+        if self.distance == [0, 0] and self.spawner in self.game.drop_particle_spawners:
             self.game.player.souls += self.souls
             self.game.drops.remove(self)
             self.game.drop_particle_spawners.remove(self.spawner)

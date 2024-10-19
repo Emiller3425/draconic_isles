@@ -2,6 +2,9 @@ import pygame
 import sys
 import random
 import math
+import json
+import os
+
 from scripts.entities import PhysicsEntity, Player, Enemy
 from scripts.utils import load_image, load_images, Animation
 from scripts.tilemap import Tilemap
@@ -169,6 +172,23 @@ class Game:
         
         for bonfire in self.bonfires:
             self.smoke_particle_spawners.append(pygame.rect.Rect(bonfire.pos[0] + 8, bonfire.pos[1] - 18, 16, 16))
+
+
+        # Save file information handling
+        if os.path.isfile('save_files/save.json'):
+            with open('save_files/save.json') as save_file:
+                data = json.load(save_file)
+                
+            # Update player data based on JSON
+            self.player.max_health = data['max_health']
+            self.player.max_stamina = data['max_stamina']
+            self.player.max_mana = data['max_mana']
+            self.player.souls = data['souls']
+            self.player.equipped_melee = data['equipped_melee']
+            self.player.equipped_spell = data['equipped_spell']
+            self.player.spawn_point = data['spawn_point']
+            self.player.pos = self.player.spawn_point.copy()
+        
 
         # Main Game Loop
         while True:

@@ -2,10 +2,12 @@ import pygame
 import random
 import asyncio
 import sys
+import json
+import numpy as np
+
 from scripts.drop import Drop, Souls
 from scripts.tilemap import Tilemap
 from scripts.projectile import Projectile, FireballSpell
-import numpy as np
 
 
 class PhysicsEntity:
@@ -175,6 +177,20 @@ class Player(PhysicsEntity):
             self.health = self.max_health
             self.stamina = self.max_stamina
             self.mana = self.max_mana
+
+            # Information to save into JSON file
+            data = {
+            'max_health' : self.max_health,
+            'max_stamina' : self.max_stamina,
+            'max_mana' : self.max_mana,
+            'souls' : self.souls,
+            'equipped_melee' : self.equipped_melee,
+            'equipped_spell' : self.equipped_spell,
+            'spawn_point' : self.spawn_point
+            }
+
+            with open('save_files/save.json', 'w') as save_file:
+                json.dump(data, save_file)
     
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
 
@@ -228,9 +244,8 @@ class Player(PhysicsEntity):
         self.game.drops.clear()
         self.game.drop_particle_spawners.clear()
         if self.souls > 0:
-            self.game.drops.append(Souls(self.game, 'soul', self.pos, self.souls))
+            self.game.drops.append(Souls(self.game, 'soul', self.pos.copy(), self.souls))
             self.souls = 0
-        # TODO set player souls to 0
         self.pos = self.spawn_point.copy()
         self.health = self.max_health
         self.stamina = self.max_stamina
@@ -387,14 +402,13 @@ class Player(PhysicsEntity):
         )
         
         # Optionally draw the melee hitbox for debugging
-        if self.melee_hitbox is not None:
-            melee_hitbox_color = (0, 255, 0)
-            pygame.draw.rect(surf, melee_hitbox_color, 
-                            pygame.Rect(self.melee_hitbox.x - offset[0], 
-                                        self.melee_hitbox.y - offset[1], 
-                                        self.melee_hitbox.width, 
-                                        self.melee_hitbox.height), 1)
-
+        # if self.melee_hitbox is not None:
+        #     melee_hitbox_color = (0, 255, 0)
+        #     pygame.draw.rect(surf, melee_hitbox_color, 
+        #                     pygame.Rect(self.melee_hitbox.x - offset[0], 
+        #                                 self.melee_hitbox.y - offset[1], 
+        #                                 self.melee_hitbox.width, 
+        #                                 self.melee_hitbox.height), 1)
 
 
 class Enemy(PhysicsEntity):

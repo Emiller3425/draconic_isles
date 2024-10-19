@@ -3,6 +3,7 @@ import re
 import os
 import copy
 import random
+import json
 
 BASE_IMG_PATH = "graphics/"
 

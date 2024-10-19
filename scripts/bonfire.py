@@ -1,6 +1,8 @@
 import pygame
 import math
 import random
+import json
+
 from scripts.light import Light
 
 # TODO The bonfire class is used to create a bonfire which acts as a save point for the player when they die, 
@@ -27,5 +29,8 @@ class Bonfire:
         surf.blit(pygame.transform.flip(self.game.assets['f_key'].copy(), self.flip, False), 
                 (self.pos[0] - offset[0] + self.anim_offset[0], 
                 self.pos[1] - offset[1] + self.anim_offset[1]))
+        
+    def save_game(self, ):
+        pass
         
 

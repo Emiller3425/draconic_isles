@@ -1,5 +1,6 @@
 import pygame
 import random
+import json
 
 class Particle:
     def __init__(self, game, p_type, pos, velocity=[0, 0], frame=0):

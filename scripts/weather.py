@@ -1,6 +1,8 @@
 import pygame
 import random
 import math
+import json
+
 from scripts.precipitation import Raindrops, Precipitation, Snow
 from scripts.utils import load_image, load_images, Animation
 
@@ -19,7 +21,8 @@ class Weather:
         self.target_opacity = 150 if not self.is_day else 0 # Target opacity for transitions
         self.flash_alpha = 0
         self.flash_duration = 0
-        self.raindrops = Raindrops(load_images('precipitation/rain'), count=100)
+        self.rain = Raindrops(load_images('precipitation/rain'), count=100)
+        self.heavy_rain = Raindrops(load_images('precipitation/rain'), count= 150)
         self.snow = Snow(load_images('precipitation/snow'), count=400)
         self.current_weather = 'clear' # 'clear', 'rain', 'thunderstorm', 'snow'
 
@@ -111,11 +114,11 @@ class Weather:
             self.raindrops = None  # No rain
         elif weather_type in ['rain', 'thunderstorm']:
             if weather_type == 'rain':
-                self.raindrops = Raindrops(load_images('precipitation/rain'), count=100)
+                self.raindrops = self.rain
             elif weather_type == 'thunderstorm':
-                self.raindrops = Raindrops(load_images('precipitation/rain'), count=140)
+                self.raindrops = self.heavy_rain
             elif weather_type == 'snow':
-                self.snow = Snow(load_images('precipitation/snow'), count=100)
+                self.snow = self.snow
 
     def get_time_of_day(self):
         return 'Day' if self.is_day else 'Night'

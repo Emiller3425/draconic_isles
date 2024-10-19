@@ -1,5 +1,6 @@
 import pygame
 import math
+import json
 from scripts.light import Light
 
 class Projectile:

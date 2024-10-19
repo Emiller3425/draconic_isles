@@ -1,5 +1,6 @@
 import pygame
 import random
+import json
 
 class Animated:
     def __init__(self, game, type, pos, frame):

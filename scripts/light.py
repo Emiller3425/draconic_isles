@@ -1,4 +1,5 @@
 import pygame
+import json
 
 # TODO Add size input parameter
 class Light:

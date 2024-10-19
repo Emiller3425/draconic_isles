@@ -2,6 +2,7 @@ import pygame
 import pytmx
 import copy
 import sys
+import json
 
 # 9 Nearby tiles
 NEIGHBORS_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1), (0, 1), (1, 1)]
