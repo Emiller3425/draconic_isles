@@ -92,7 +92,7 @@ class PhysicsEntity:
         if self.is_facing == 'up':
             self.melee_hitbox = pygame.Rect(self.pos[0] + 4, self.pos[1] - 14, 8, 18)
         elif self.is_facing == 'down':
-            self.melee_hitbox = pygame.Rect(self.pos[0] + 4, self.pos[1] + 4, 8, 18)
+            self.melee_hitbox = pygame.Rect(self.pos[0] + 4, self.pos[1] + 14, 8, 18)
         elif self.is_facing == 'left':
             self.melee_hitbox = pygame.Rect(self.pos[0] - 14, self.pos[1], 18, 8)
         elif self.is_facing == 'right':
@@ -276,9 +276,9 @@ class Player(PhysicsEntity):
     def update_melee_hitbox(self):
         """Update the melee hitbox position based on the player's current position and facing direction."""
         if self.is_facing == 'up':
-            self.melee_hitbox = pygame.Rect(self.pos[0] + 4, self.pos[1] - 12, 8, 18)
+            self.melee_hitbox = pygame.Rect(self.pos[0] + 4, self.pos[1] - 14, 8, 18)
         elif self.is_facing == 'down':
-            self.melee_hitbox = pygame.Rect(self.pos[0] + 4, self.pos[1] + 12, 8, 18)
+            self.melee_hitbox = pygame.Rect(self.pos[0] + 4, self.pos[1] + 14, 8, 18)
         elif self.is_facing == 'left':
             self.melee_hitbox = pygame.Rect(self.pos[0] - 14, self.pos[1] + 4, 18, 8)
         elif self.is_facing == 'right':
@@ -371,6 +371,11 @@ class Player(PhysicsEntity):
             # Align the weapon position with the melee hitbox
             weapon_pos = (self.melee_hitbox.x - offset[0], self.melee_hitbox.y - offset[1])
 
+            if self.is_facing in ['up']:
+                weapon_pos = (self.melee_hitbox.x - offset[0], self.melee_hitbox.y - offset[1])
+            elif self.is_facing in ['down']:
+                weapon_pos = (self.melee_hitbox.x - offset[0], self.melee_hitbox.y - offset[1])
+
             # Blit (draw) the weapon image on the surface
             surf.blit(weapon_image, weapon_pos)
 
@@ -381,14 +386,14 @@ class Player(PhysicsEntity):
             self.pos[1] - offset[1] + self.anim_offset[1])
         )
         
-        # # Optionally draw the melee hitbox for debugging
-        # if self.melee_hitbox is not None:
-        #     melee_hitbox_color = (0, 255, 0)
-        #     pygame.draw.rect(surf, melee_hitbox_color, 
-        #                     pygame.Rect(self.melee_hitbox.x - offset[0], 
-        #                                 self.melee_hitbox.y - offset[1], 
-        #                                 self.melee_hitbox.width, 
-        #                                 self.melee_hitbox.height), 1)
+        # Optionally draw the melee hitbox for debugging
+        if self.melee_hitbox is not None:
+            melee_hitbox_color = (0, 255, 0)
+            pygame.draw.rect(surf, melee_hitbox_color, 
+                            pygame.Rect(self.melee_hitbox.x - offset[0], 
+                                        self.melee_hitbox.y - offset[1], 
+                                        self.melee_hitbox.width, 
+                                        self.melee_hitbox.height), 1)
 
 
 
