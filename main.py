@@ -38,8 +38,11 @@ class Game:
         self.assets = {
             'title_screen': load_image('screens/title_screen/0.png'),
             'title_screen/animation': load_images('screens/title_screen/animation'),
-            'continue_button': load_image('screens/buttons/continue_button.png'),
-            'new_game_button': load_image('screens/buttons/new_game_button.png'),
+            'continue_button': load_image('screens/buttons/continue_button/0.png'),
+            'continue_button_hover' : load_image('screens/buttons/continue_button/1.png'),
+            'continue_button_greyed_out' : load_image('screens/buttons/continue_button/2.png'),
+            'new_game_button': load_image('screens/buttons/new_game_button/0.png'),
+            'new_game_button_hover': load_image('screens/buttons/new_game_button/1.png'),
             'player': load_images('player/'),
             'skeleton': load_images('skeleton/'),
             'walls': load_images('walls/'),
@@ -116,30 +119,49 @@ class Game:
     # Handles all logic in the start screen when the game is initially booted up
     def start_screen(self):
         self.screen.fill((0, 0, 0))
-        font = pygame.font.SysFont(None, 74)
-        title_text = font.render("Ninja Platformer", True, (255, 255, 255))
-        self.screen.blit(title_text, (self.screen.get_width() // 2 - title_text.get_width() // 2, 100))
-
-        start_font = pygame.font.SysFont(None, 48)
-        start_text = start_font.render("Click to Start", True, (255, 255, 255))
-        self.screen.blit(start_text, (self.screen.get_width() // 2 - start_text.get_width() // 2, 300))
 
         self.screen.blit(pygame.transform.scale(self.assets['title_screen'], self.screen.get_size()), (0,0))
 
         self.screen.blit(self.assets['new_game_button'], (self.screen.get_width() // 2 - self.assets['new_game_button'].get_width() // 2, 400))
+        new_game_rect = pygame.Rect(self.screen.get_width() // 2 - self.assets['new_game_button'].get_width() // 2, 400, self.assets['new_game_button'].get_width(), self.assets['new_game_button'].get_height())
 
         self.screen.blit(self.assets['continue_button'], (self.screen.get_width() // 2 - self.assets['continue_button'].get_width() // 2, 450))
+        continue_rect = pygame.Rect(self.screen.get_width() // 2 - self.assets['continue_button'].get_width() // 2, 450, self.assets['continue_button'].get_width(), self.assets['continue_button'].get_height())
 
         pygame.display.update()
 
+        # TODO Fix handling for continue and new game when we get to end state
         while True:
+            cursor_pos = pygame.mouse.get_pos()
+            if new_game_rect.collidepoint(cursor_pos):
+                self.screen.blit(self.assets['new_game_button_hover'], (self.screen.get_width() // 2 - self.assets['new_game_button_hover'].get_width() // 2, 400))
+            else:
+                self.screen.blit(self.assets['new_game_button'], (self.screen.get_width() // 2 - self.assets['new_game_button'].get_width() // 2, 400))
+            if os.path.isfile('save_files/save.json'):
+                if continue_rect.collidepoint(cursor_pos):
+                    self.screen.blit(self.assets['continue_button_hover'], (self.screen.get_width() // 2 - self.assets['continue_button_hover'].get_width() // 2, 450))
+                else:
+                    self.screen.blit(self.assets['continue_button'], (self.screen.get_width() // 2 - self.assets['continue_button'].get_width() // 2, 450))
+            else:
+                    self.screen.blit(self.assets['continue_button_greyed_out'], (self.screen.get_width() // 2 - self.assets['continue_button_greyed_out'].get_width() // 2, 450))
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    self.show_start_screen = False
-                    return
+                    if new_game_rect.collidepoint(event.pos):
+                        self.show_start_screen = False
+                        self.continue_save = False
+                        return
+                    elif continue_rect.collidepoint(event.pos) and os.path.isfile('save_files/save.json'):
+                        self.show_start_screen = False
+                        self.continue_save = True
+                        return
+                    
+            pygame.display.update()
+            self.clock.tick(60)
+
 
     def main(self):
         # Initialize tilemap
@@ -204,21 +226,8 @@ class Game:
                 if k =='lava':
                     self.lights.append(Light(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), 25, [70, 20, 0]))
 
-                    
-
-        self.ui = UI(self, self.player, self.player.equipped_melee, self.player.equipped_spell)
-
-        # Get all light objects
-        for light in self.tilemap.extract([('light', 0)], keep=True):
-            self.lights.append(Light(self, light['pos'], 20, [20, 20, 0]))
-            self.lamp_particle_spawners.append(pygame.rect.Rect(light['pos'][0], light['pos'][1], 16, 16))
-        
-        for bonfire in self.bonfires:
-            self.smoke_particle_spawners.append(pygame.rect.Rect(bonfire.pos[0] + 8, bonfire.pos[1] - 18, 16, 16))
-
-
         # Save file information handling
-        if os.path.isfile('save_files/save.json'):
+        if self.continue_save:
             with open('save_files/save.json') as save_file:
                 data = json.load(save_file)
                 
@@ -231,7 +240,18 @@ class Game:
             self.player.equipped_spell = data['equipped_spell']
             self.player.spawn_point = data['spawn_point']
             self.player.pos = self.player.spawn_point.copy()
+        elif os.path.isfile('save_files/save.json'):
+             os.remove('save_files/save.json')
+
+        self.ui = UI(self, self.player, self.player.equipped_melee, self.player.equipped_spell)
+
+        # Get all light objects
+        for light in self.tilemap.extract([('light', 0)], keep=True):
+            self.lights.append(Light(self, light['pos'], 20, [20, 20, 0]))
+            self.lamp_particle_spawners.append(pygame.rect.Rect(light['pos'][0], light['pos'][1], 16, 16))
         
+        for bonfire in self.bonfires:
+            self.smoke_particle_spawners.append(pygame.rect.Rect(bonfire.pos[0] + 8, bonfire.pos[1] - 18, 16, 16))
 
         # Main Game Loop
         while True:

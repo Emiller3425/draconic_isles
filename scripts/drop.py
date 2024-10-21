@@ -34,8 +34,8 @@ class Drop:
             (self.center[0] - self.game.player.pos[0]) // self.tile_size, 
             (self.center[1] - self.game.player.pos[1]) // self.tile_size
                             ] 
-        self.distance[0] = abs(self.distance[0])
-        self.distance[1] = abs(self.distance[1])
+        # self.distance[0] = abs(self.distance[0])
+        # self.distance[1] = abs(self.distance[1])
 
 
     def render(self, surf, offset = (0, 0)):
@@ -54,7 +54,7 @@ class Souls(Drop):
     def player_pickup(self):
         super().player_pickup()
 
-        if self.distance == [0, 0] and self.spawner in self.game.drop_particle_spawners:
+        if (self.distance[0] > -1 and self.distance[0] < 1 and self.distance[1] > -1 and self.distance[1] < 1) and self.spawner in self.game.drop_particle_spawners:
             self.game.player.souls += self.souls
             self.game.drops.remove(self)
             self.game.drop_particle_spawners.remove(self.spawner)
