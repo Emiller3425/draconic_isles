@@ -109,15 +109,23 @@ class PhysicsEntity:
                 if direction == 'left':
                     self.collisions['left'] = True
                     self.pos[0] = rect.right - self.physics_offset_x
+                    self.patrol_direction = None
+                    self.patrol_counter = 1
                 elif direction == 'right':
                     self.collisions['right'] = True
                     self.pos[0] = rect.left - self.physics_hitbox[0] - 1
+                    self.patrol_direction = None
+                    self.patrol_counter = 1
                 elif direction == 'up':
                     self.collisions['up'] = True
                     self.pos[1] = rect.bottom - self.physics_offset_y
+                    self.patrol_direction = None
+                    self.patrol_counter = 1
                 elif direction == 'down':
                     self.collisions['down'] = True
                     self.pos[1] = rect.top - self.physics_hitbox[1] - self.physics_offset_y
+                    self.patrol_direction = None
+                    self.patrol_counter = 1
 
     def render(self, surf, offset=(0, 0)):
         surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), 
@@ -422,32 +430,115 @@ class Enemy(PhysicsEntity):
         self.knockback_remaining = 0
         self.knockback_direction = None
         self.souls = 100
+        self.patrol_counter = 0
+        self.pause_counter = 0
+        self.move_x = 0
+        self.move_y = 0
+        self.patrol_area_x = [self.pos[0] - 50, self.pos[0] + 50]
+        self.patrol_area_y = [self.pos[1] - 50, self.pos[1] + 50]
+        self.patrol_area_center = self.pos.copy()
+        self.patrol_direction = None
+        self.pursuit = False
 
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
         if self.knockback_remaining > 0:
             self.apply_knockback_movement()
+            self.patrol_counter = -1
         else:
             direction_x = self.game.player.pos[0] - self.pos[0]
             direction_y = self.game.player.pos[1] - self.pos[1]
             distance = max(1, (direction_x ** 2 + direction_y ** 2) ** 0.5)
 
-            move_x = self.speed * (direction_x / distance)
-            move_y = self.speed * (direction_y / distance)
-
             movement_x = [False, False]
             movement_y = [False, False]
 
-            if abs(move_y) > 0.25:
-                if move_y < 0:
-                    movement_y[0] = abs(move_y)
-                else:
-                    movement_y[1] = abs(move_y)
+            # Start pursuit
+            if distance < 70:
+                self.pursuit = True
+                self.move_x = self.speed * (direction_x / distance)
+                self.move_y = self.speed * (direction_y / distance)
 
-            if abs(move_x) > 0.25:
-                if move_x < 0:
-                    movement_x[0] = abs(move_x)
+            # If was pursuiting lose pursuit distance is larger
+            elif distance < 90 and self.pursuit:
+                self.move_x = self.speed * (direction_x / distance)
+                self.move_y = self.speed * (direction_y / distance)
+
+            # If no longer pursuiting or is outside of its patrol area
+            elif self.pursuit or self.pos[0] < self.patrol_area_x[0] or self.pos[0] > self.patrol_area_x[1] or self.pos[1] < self.patrol_area_y[0] or self.pos[1] > self.patrol_area_y[1]:
+                direction_x = self.patrol_area_center[0] - self.pos[0]
+                direction_y = self.patrol_area_center[1] - self.pos[1]
+                distance = max(1, (direction_x ** 2 + direction_y ** 2) ** 0.5)
+                self.move_x = self.speed * (direction_x / distance)
+                self.move_y = self.speed * (direction_y / distance)
+                # If pursuit and no longer in range to chase player
+                if abs(self.pos[0] - self.patrol_area_center[0] < 20) and abs(self.pos[1] - self.patrol_area_center[1] < 20):
+                    self.pursuit = False
+                    self.pause_counter = random.randint(10, 30)
+                    self.patrol_counter = 0.5
+
+            # Patrol
+            elif self.patrol_counter <= 0:
+                self.patrol_direction = ['up', 'down', 'left', 'right'][(random.randint(0, 3))]
+                self.patrol_counter = random.randint(100, 200)
+                if self.patrol_direction == 'up':
+                    self.move_x = 0
+                    self.move_y = -0.3
+                elif self.patrol_direction  == 'down':
+                    self.move_x = 0
+                    self.move_y = 0.3
+                elif self.patrol_direction == 'left':
+                    self.move_x = -0.3
+                    self.move_y = 0
                 else:
-                    movement_x[1] = abs(move_x)
+                    self.move_x = 0.3
+                    self.move_y = 0
+
+            # End patrol and start pause
+            elif self.patrol_counter == 1:
+                self.pause_counter = random.randint(100, 200)
+                self.move_x = 0
+                self.move_y = 0
+                self.patrol_counter = 0.5
+            # Iterate pause
+            elif self.pause_counter >= 0:
+                self.pause_counter -= 1
+            # End pause start new patrol
+            elif self.pause_counter < 0 and self.patrol_counter == 0.5:
+                self.pause_counter = 0
+                self.patrol_counter = 0
+            # If exits patrol area during patrol
+            else:
+                if self.pos[0] < self.patrol_area_x[0] and self.patrol_direction == 'left':
+                    self.patrol_direction == 'right'
+                    self.patrol_counter *= 2
+                    self.move_x *= -1
+                elif self.pos[0] > self.patrol_area_x[1] and self.patrol_direction == 'right':
+                    self.patrol_direction == 'left'
+                    self.patrol_counter *= 2
+                    self.move_x *= -1
+                elif self.pos[1] < self.patrol_area_y[0] and self.patrol_direction == 'up':
+                    self.patrol_direction == 'down'
+                    self.patrol_counter *= 2
+                    self.move_y *= -1
+                elif self.pos[1] > self.patrol_area_y[1] and self.patrol_direction == 'down':
+                    self.patrol_direction == 'up'
+                    self.patrol_counter *= 2
+                    self.move_y *= -1
+                else:
+                    self.patrol_counter -= 1
+
+            # Handle movement
+            if abs(self.move_y) > 0.25:
+                if self.move_y < 0:
+                    movement_y[0] = abs(self.move_y)
+                else:
+                    movement_y[1] = abs(self.move_y)
+
+            if abs(self.move_x) > 0.25:
+                if self.move_x < 0:
+                    movement_x[0] = abs(self.move_x)
+                else:
+                    movement_x[1] = abs(self.move_x)
 
             super().update(movement_x, movement_y)
 

@@ -6,6 +6,9 @@ import json
 from scripts.precipitation import Raindrops, Precipitation, Snow
 from scripts.utils import load_image, load_images, Animation
 
+
+# TODO add a fog weather type, add a weather cycle that cycles through al types of weather, add particles for each type of precipitation, 
+
 class Weather:
     def __init__(self, game, initial_weather_type='clear', day_duration=1000, night_duration=1000):
         self.game = game
@@ -24,7 +27,7 @@ class Weather:
         self.rain = Raindrops(load_images('precipitation/rain'), count=100)
         self.heavy_rain = Raindrops(load_images('precipitation/rain'), count= 150)
         self.snow = Snow(load_images('precipitation/snow'), count=400)
-        self.current_weather = 'clear' # 'clear', 'rain', 'thunderstorm', 'snow'
+        self.current_weather = 'clear' # 'clear', 'rain', 'thunderstorm', 'snow', 'fog
 
         self.night_overlay = pygame.Surface(self.game.display.get_size(), pygame.SRCALPHA)
 
