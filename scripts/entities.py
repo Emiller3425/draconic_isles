@@ -244,6 +244,8 @@ class Player(PhysicsEntity):
             if time_since_last_spell >= self.mana_regen_cooldown:
                 self.mana = min(self.max_mana, self.mana + self.mana_regen_rate)
 
+        self.game.tilemap.insert_player_into_physics_tilemap(self.pos)
+
         # Handle Death
         if self.health <= 0:
             self.die()
@@ -452,6 +454,9 @@ class Enemy(PhysicsEntity):
             movement_x = [False, False]
             movement_y = [False, False]
 
+            # TODO when pursuiting enemy we need some more advanced behavior besides just running straight after them, maybe using raycasting and a search algo if they are outside of view to the last know location
+
+
             # Start pursuit
             if distance < 70:
                 self.pursuit = True
@@ -462,6 +467,8 @@ class Enemy(PhysicsEntity):
             elif distance < 90 and self.pursuit:
                 self.move_x = self.speed * (direction_x / distance)
                 self.move_y = self.speed * (direction_y / distance)
+
+            # TODO When returning back to the patrol area we need some behavior to navigate back to the patrol area, You should try a search algorithm
 
             # If no longer pursuiting or is outside of its patrol area
             elif self.pursuit or self.pos[0] < self.patrol_area_x[0] or self.pos[0] > self.patrol_area_x[1] or self.pos[1] < self.patrol_area_y[0] or self.pos[1] > self.patrol_area_y[1]:

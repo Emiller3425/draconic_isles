@@ -113,6 +113,11 @@ class Tilemap:
                 if layer.data[y][x] not in self.tilemap_layer_data_values[layer.name]:
                     self.tilemap_layer_data_values[layer.name].append(layer.data[y][x])
 
+        for layer_index, layer in enumerate(self.tmx_data.visible_layers):
+            for x, y , surf in layer.tiles():
+                if layer.data[y][x] not in self.tilemap_layer_data_values[layer.name]:
+                    self.tilemap_layer_data_values[layer.name].append(layer.data[y][x])
+
         self.temp_object_layers = copy.deepcopy(self.object_layers)
         self.temp_animated_layers = copy.deepcopy(self.animated_layers)
         
@@ -134,6 +139,23 @@ class Tilemap:
                             self.temp_animated_layers[k]['positions'].append((x,y))
                             self.temp_animated_layers[k]['variants'].append(self.tilemap_layer_data_values[layer.name].index(layer.data[y][x]))
 
+
+        # 2D array of phsics tiles for the purpose of using a maze solving algo for pathfinding enemies to player
+        self.physics_tilemap = [[0 for x in range(self.tmx_data.width)] for y in range(self.tmx_data.height)]
+        for tile in self.tilemap:
+            negate_physics = None
+            for tile_types in self.tilemap[tile]:
+                if tile_types['type'] in NEGATE_PHYSICS_LAYERS:
+                    negate_physics = True
+            index = tile.find(';')
+            x = int(tile[:index])
+            y = int(tile[index+1:])
+            if tile_types['type'] in PHYSICS_TILE_TYPES and not negate_physics:
+                self.physics_tilemap[y][x] = 1
+            else:
+                self.physics_tilemap[y][x] = 0
+
+            
 
         physics_variants = self.get_top_left_most_variants(self.temp_object_layers)
         # TODO animation objects that are non-physics need to be rendered under player always
@@ -341,6 +363,21 @@ class Tilemap:
 
         return nearby_bonfires
 
+    def insert_entity_into_physics_tilemap(self, pos, entity_type):
+        for i in range(0, len(self.physics_tilemap) - 1):
+            for j in range (0, len(self.physics_tilemap[i]) - 1):
+                if self.physics_tilemap[i][j] == 2 and entity_type == 'player':
+                    self.physics_tilemap[i][j] = 0
+                if self.physics_tilemap[i][j] == 3 and entity_type == 'enemy':
+                    self.physics_tilemap[i][j] = 0
+        entity_x = int(pos[0] // self.tile_size)
+        entity_y = int(pos[1] // self.tile_size)
+        if entity_type == 'player':
+            self.physics_tilemap[entity_y][entity_x] = 2
+        else:
+            self.physics_tilemap[entity_y][entity_x] = 3
+                
+                
     # def render(self, surf, offset=(0, 0)):
     #         """
     #         Render the tilemap to the given surface.
