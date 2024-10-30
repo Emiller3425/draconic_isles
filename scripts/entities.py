@@ -4,6 +4,7 @@ import asyncio
 import sys
 import json
 import numpy as np
+from collections import deque
 
 from scripts.drop import Drop, Souls
 from scripts.tilemap import Tilemap
@@ -217,8 +218,6 @@ class Player(PhysicsEntity):
             if bonfire.pos in self.nearby_bonfires:
                 self.nearby_bonfire_objects.append(bonfire)   
 
-        # TODO collect souls if dropped and walk over them and then remove that drop and re-add souls to player-souls
-
         # Update melee attack duration
         if self.melee_hitbox is not None:
             self.update_melee_hitbox()
@@ -244,7 +243,7 @@ class Player(PhysicsEntity):
             if time_since_last_spell >= self.mana_regen_cooldown:
                 self.mana = min(self.max_mana, self.mana + self.mana_regen_rate)
 
-        self.game.tilemap.insert_player_into_physics_tilemap(self.pos)
+        self.game.tilemap.insert_entity_into_physics_tilemap(self.pos, 'player')
 
         # Handle Death
         if self.health <= 0:
@@ -432,6 +431,7 @@ class Enemy(PhysicsEntity):
         self.knockback_remaining = 0
         self.knockback_direction = None
         self.souls = 100
+        # patrol stuff
         self.patrol_counter = 0
         self.pause_counter = 0
         self.move_x = 0
@@ -440,7 +440,14 @@ class Enemy(PhysicsEntity):
         self.patrol_area_y = [self.pos[1] - 50, self.pos[1] + 50]
         self.patrol_area_center = self.pos.copy()
         self.patrol_direction = None
+        # pursuit stuff
         self.pursuit = False
+        self.path = None
+        self.current_tile = None
+        self.traveling = False
+        self.pursuit_direction = None
+        self.start = None
+        self.next = None
 
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
         if self.knockback_remaining > 0:
@@ -449,28 +456,64 @@ class Enemy(PhysicsEntity):
         else:
             direction_x = self.game.player.pos[0] - self.pos[0]
             direction_y = self.game.player.pos[1] - self.pos[1]
-            distance = max(1, (direction_x ** 2 + direction_y ** 2) ** 0.5)
-
+            if self.pursuit:
+                self.move_x = 0
+                self.move_y = 0
+            distance = max(1, (direction_x  ** 2 + direction_y ** 2) ** 0.5)
             movement_x = [False, False]
             movement_y = [False, False]
 
-            # TODO when pursuiting enemy we need some more advanced behavior besides just running straight after them, maybe using raycasting and a search algo if they are outside of view to the last know location
-
-
+            # TODO Boolean flag that checks to make sure the self.pos is more or less than where it is moving to before setting the next tile
             # Start pursuit
-            if distance < 70:
+            if distance < 100:
                 self.pursuit = True
-                self.move_x = self.speed * (direction_x / distance)
-                self.move_y = self.speed * (direction_y / distance)
+                if self.path is None or self.path[len(self.path) - 1] != (self.game.player.pos[1] // 16, self.game.player.pos[0] // 16):
+                    tilemap = self.game.tilemap.insert_entity_into_physics_tilemap(self.pos, 'enemy')
+                    self.path = self.construct_path(tilemap)
+                else:
+                    if len(self.path) >= 2 and not self.traveling:
+                        self.start = self.path[0]
+                        self.next = self.path[1]
+                        if self.start[1] < self.next[1]:
+                            # Right
+                            self.move_x = 1
+                            self.pursuit_direction = 'right'
+                        elif self.start[1] > self.next[1]:
+                            # Left
+                            self.move_x = -1
+                            self.pursuit_direction = 'left'
+                        elif self.start[0] < self.next[0]:
+                            # Up
+                            self.move_y = 1
+                            self.pursuit_direction = 'down'
+                        elif self.start[1] > self.next[1]:
+                            # Down 
+                            self.move_y = -1
+                            self.pursuit_direction = 'up'
+                        if len(self.path) == 2:
+                            self.current_tile = self.path[0]
+                        del self.path[0]
+                        self.traveling = True     
+                    if self.traveling:
+                        # print(self.pos[0] / 16, self.pos[1] / 16, self.next)
+                        # print(self.pursuit_direction)
+                        if self.pursuit_direction == 'right' and self.pos[0] / 16 < self.next[1]:
+                            self.move_x = 1 * self.speed
+                        elif self.pursuit_direction == 'left' and self.pos[0] / 16 > self.next[1]:
+                            self.move_x = -1 * self.speed
+                        elif self.pursuit_direction == 'up' and self.pos[1] / 16 > self.next[0]:
+                            self.move_y = -1 * self.speed
+                        elif self.pursuit_direction == 'down' and self.pos[1] / 16 < self.next[0]:
+                            self.move_y = 1 * self.speed
+                        else:
+                            self.pursuit_direction = None
+                            self.traveling = False           
+                    else:
+                        self.move_x = self.speed * (direction_x / distance)
+                        self.move_y = self.speed * (direction_y / distance)
 
-            # If was pursuiting lose pursuit distance is larger
-            elif distance < 90 and self.pursuit:
-                self.move_x = self.speed * (direction_x / distance)
-                self.move_y = self.speed * (direction_y / distance)
 
-            # TODO When returning back to the patrol area we need some behavior to navigate back to the patrol area, You should try a search algorithm
-
-            # If no longer pursuiting or is outside of its patrol area
+            # If outside pursuiting distance or is outside of its patrol area
             elif self.pursuit or self.pos[0] < self.patrol_area_x[0] or self.pos[0] > self.patrol_area_x[1] or self.pos[1] < self.patrol_area_y[0] or self.pos[1] > self.patrol_area_y[1]:
                 direction_x = self.patrol_area_center[0] - self.pos[0]
                 direction_y = self.patrol_area_center[1] - self.pos[1]
@@ -537,14 +580,18 @@ class Enemy(PhysicsEntity):
             # Handle movement
             if abs(self.move_y) > 0.25:
                 if self.move_y < 0:
+                    # up
                     movement_y[0] = abs(self.move_y)
                 else:
+                    # down
                     movement_y[1] = abs(self.move_y)
 
             if abs(self.move_x) > 0.25:
                 if self.move_x < 0:
+                    # left
                     movement_x[0] = abs(self.move_x)
                 else:
+                    # right
                     movement_x[1] = abs(self.move_x)
 
             super().update(movement_x, movement_y)
@@ -563,6 +610,63 @@ class Enemy(PhysicsEntity):
 
         if self.health <= 0:
             self.die()
+
+    # BFS algorithm for finding path from 3 to 2 in physcis_tilemap
+    def find_start_and_target(self, physics_tilemap):
+        start = None
+        target = None
+        for i in range(len(physics_tilemap)):
+            for j in range(len(physics_tilemap[i])):
+                if physics_tilemap[i][j] == 3:
+                    start = (i, j)
+                if physics_tilemap[i][j] == 2:
+                    target = (i, j)
+        return start, target
+    
+    # BFS algorithm for finding path from 3 to 2 in physcis_tilemap
+    def bfs(self, physics_tilemap, start, target):
+        if start is None:
+            return
+        if target is None:
+            return
+        rows, cols = len(physics_tilemap), len(physics_tilemap[0])
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        queue = deque([start])
+        visited = set([start])
+        parent = {start: None}
+
+        while queue:
+            current = queue.popleft()
+            if current == target:
+                break
+
+            for direction in directions:
+                new_row, new_col = current[0] + direction[0], current[1] + direction[1]
+                new_position = (new_row, new_col)
+
+                if 0 <= new_row < rows and 0 <= new_col <cols and new_position not in visited:
+                    if physics_tilemap[new_row][new_col] != 1:
+                        queue.append(new_position)
+                        visited.add(new_position)
+                        parent[new_position] = current
+        
+        if target in parent:
+            path = []
+            step = target
+            while step is not None:
+                path.append(step)
+                step = parent[step]
+            path.reverse()
+            return path
+        else:
+            return None
+        
+
+    def construct_path(self, physics_tilemap):
+        start, target = self.find_start_and_target(physics_tilemap)
+        if not start or not target:
+            return None
+        return self.bfs(physics_tilemap, start, target)
 
     def apply_knockback(self, knockback_vector, knockback_strength):
         distance = max(1, (knockback_vector[0] ** 2 + knockback_vector[1] ** 2) ** 0.5)

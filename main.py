@@ -223,7 +223,7 @@ class Game:
                     self.animated_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), frame = random.randint(0, len(self.assets[k+'/animation'].images))))
                 else:
                     self.animated_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), frame = 0))
-                if k =='lava':
+                if k == 'lava':
                     self.lights.append(Light(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), 25, [70, 20, 0]))
 
         # Save file information handling

@@ -154,9 +154,7 @@ class Tilemap:
                 self.physics_tilemap[y][x] = 1
             else:
                 self.physics_tilemap[y][x] = 0
-
             
-
         physics_variants = self.get_top_left_most_variants(self.temp_object_layers)
         # TODO animation objects that are non-physics need to be rendered under player always
         animated_variants = self.get_top_left_most_variants(self.temp_animated_layers)
@@ -372,10 +370,15 @@ class Tilemap:
                     self.physics_tilemap[i][j] = 0
         entity_x = int(pos[0] // self.tile_size)
         entity_y = int(pos[1] // self.tile_size)
+        if entity_y > len(self.physics_tilemap) - 1:
+            return
+        if entity_x > len(self.physics_tilemap[entity_y]) - 1:
+            return
         if entity_type == 'player':
             self.physics_tilemap[entity_y][entity_x] = 2
         else:
             self.physics_tilemap[entity_y][entity_x] = 3
+        return self.physics_tilemap
                 
                 
     # def render(self, surf, offset=(0, 0)):
