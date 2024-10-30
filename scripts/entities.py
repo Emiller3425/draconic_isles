@@ -463,9 +463,9 @@ class Enemy(PhysicsEntity):
             movement_x = [False, False]
             movement_y = [False, False]
 
-            # TODO Boolean flag that checks to make sure the self.pos is more or less than where it is moving to before setting the next tile
+            # TODO Some weird movement sometimes and also can't navigate to the player on the bridge, close though
             # Start pursuit
-            if distance < 100:
+            if distance < 40:
                 self.pursuit = True
                 if self.path is None or self.path[len(self.path) - 1] != (self.game.player.pos[1] // 16, self.game.player.pos[0] // 16):
                     tilemap = self.game.tilemap.insert_entity_into_physics_tilemap(self.pos, 'enemy')
@@ -507,7 +507,9 @@ class Enemy(PhysicsEntity):
                             self.move_y = 1 * self.speed
                         else:
                             self.pursuit_direction = None
-                            self.traveling = False           
+                            self.traveling = False     
+                        if len(self.path) == 2:
+                            self.traveling = False      
                     else:
                         self.move_x = self.speed * (direction_x / distance)
                         self.move_y = self.speed * (direction_y / distance)
