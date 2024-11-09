@@ -27,7 +27,9 @@ class Weather:
         self.rain = Raindrops(load_images('precipitation/rain'), count=100)
         self.heavy_rain = Raindrops(load_images('precipitation/rain'), count= 150)
         self.snow = Snow(load_images('precipitation/snow'), count=400)
-        self.current_weather = 'clear' # 'clear', 'rain', 'thunderstorm', 'snow', 'fog
+        self.weather_types = ['clear', 'rain', 'thunderstorm', 'snow'] # Still need to add fog
+        self.current_weather = initial_weather_type
+        self.day_night_cycle_counter = 0
 
         self.night_overlay = pygame.Surface(self.game.display.get_size(), pygame.SRCALPHA)
 
@@ -38,15 +40,22 @@ class Weather:
         if self.time >= self.day_duration and self.is_day:
             self.is_day = False
             self.time = 0
+            self.day_night_cycle_counter += 0.5
             self.start_transition(150)  # Start transitioning to night (opacity 150)
         elif self.time >= self.night_duration and not self.is_day:
             self.is_day = True
             self.time = 0
+            self.day_night_cycle_counter += 0.5
             self.start_transition(0)  # Start transitioning to day (opacity 10)
 
         # Update night overlay opacity if transitioning
         if self.transitioning:
             self.update_transition()
+        
+        # Handle weather change
+        if self.day_night_cycle_counter >= 3:
+            self.change_weather(self.weather_types[random.randint(0, len(self.weather_types) - 1)])
+            self.day_night_cycle_counter = 0
 
         # Handle weather-specific updates
         if self.current_weather == 'rain':

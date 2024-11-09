@@ -97,7 +97,7 @@ class Game:
         }
 
         self.audio = {
-            # TODO audio lol
+            # TODO audio lol retard
         }
 
 
@@ -117,6 +117,12 @@ class Game:
                 self.main()
 
     # Handles all logic in the start screen when the game is initially booted up
+    def reset_enemies(self):
+        for enemy in self.enemies:
+            print(enemy.pos)
+            print(enemy.spawn_point)
+            enemy.pos = enemy.spawn_point.copy()
+
     def start_screen(self):
         self.screen.fill((0, 0, 0))
 

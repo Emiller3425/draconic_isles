@@ -200,6 +200,8 @@ class Player(PhysicsEntity):
 
             with open('save_files/save.json', 'w') as save_file:
                 json.dump(data, save_file)
+        
+        self.game.reset_enemies()
     
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
 
@@ -431,6 +433,7 @@ class Enemy(PhysicsEntity):
         self.knockback_remaining = 0
         self.knockback_direction = None
         self.souls = 100
+        self.spawn_point = self.pos.copy()
         # patrol stuff
         self.patrol_counter = 0
         self.pause_counter = 0
@@ -464,12 +467,16 @@ class Enemy(PhysicsEntity):
             movement_y = [False, False]
 
             # TODO Some weird movement sometimes and also can't navigate to the player on the bridge, close though
+            # main issue is the pos can be a float, and this causes issues with the pathfinding, also the frequency of calling
+            # the slgo could be causing issues too.
             # Start pursuit
-            if distance < 40:
+            
+            if distance < 100:
                 self.pursuit = True
                 if self.path is None or self.path[len(self.path) - 1] != (self.game.player.pos[1] // 16, self.game.player.pos[0] // 16):
                     tilemap = self.game.tilemap.insert_entity_into_physics_tilemap(self.pos, 'enemy')
                     self.path = self.construct_path(tilemap)
+                    self.pursuit_direction = None
                 else:
                     if len(self.path) >= 2 and not self.traveling:
                         self.start = self.path[0]
@@ -486,33 +493,32 @@ class Enemy(PhysicsEntity):
                             # Up
                             self.move_y = 1
                             self.pursuit_direction = 'down'
-                        elif self.start[1] > self.next[1]:
+                        elif self.start[0] > self.next[0]:
                             # Down 
                             self.move_y = -1
                             self.pursuit_direction = 'up'
                         if len(self.path) == 2:
                             self.current_tile = self.path[0]
-                        del self.path[0]
-                        self.traveling = True     
+                        self.traveling = True
                     if self.traveling:
-                        # print(self.pos[0] / 16, self.pos[1] / 16, self.next)
-                        # print(self.pursuit_direction)
-                        if self.pursuit_direction == 'right' and self.pos[0] / 16 < self.next[1]:
+                        if self.pursuit_direction == 'right' and (self.pos[0] + 2) / 16 < self.next[1] + 0.06:
                             self.move_x = 1 * self.speed
-                        elif self.pursuit_direction == 'left' and self.pos[0] / 16 > self.next[1]:
+                        elif self.pursuit_direction == 'left' and (self.pos[0] - 2) / 16 > self.next[1] - 0.06:
                             self.move_x = -1 * self.speed
-                        elif self.pursuit_direction == 'up' and self.pos[1] / 16 > self.next[0]:
+                        elif self.pursuit_direction == 'up' and (self.pos[1] + 2) / 16 > self.next[0] - 0.06:
                             self.move_y = -1 * self.speed
-                        elif self.pursuit_direction == 'down' and self.pos[1] / 16 < self.next[0]:
+                        elif self.pursuit_direction == 'down' and (self.pos[1] - 2) / 16 < self.next[0] + 0.06:
                             self.move_y = 1 * self.speed
-                        else:
+                        else: 
                             self.pursuit_direction = None
-                            self.traveling = False     
+                            self.traveling = False
+                            del self.path[0]     
                         if len(self.path) == 2:
-                            self.traveling = False      
+                            self.traveling = False                      
                     else:
                         self.move_x = self.speed * (direction_x / distance)
                         self.move_y = self.speed * (direction_y / distance)
+                        
 
 
             # If outside pursuiting distance or is outside of its patrol area
@@ -627,41 +633,43 @@ class Enemy(PhysicsEntity):
     
     # BFS algorithm for finding path from 3 to 2 in physcis_tilemap
     def bfs(self, physics_tilemap, start, target):
-        if start is None:
-            return
-        if target is None:
-            return
+        if start is None or target is None:
+            return None  # Return if either start or target is not found
+
         rows, cols = len(physics_tilemap), len(physics_tilemap[0])
-        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Up, down, left, right
         queue = deque([start])
         visited = set([start])
         parent = {start: None}
 
         while queue:
             current = queue.popleft()
-            if current == target:
-                break
 
+            # Stop if the current node is the target
+            if current == target:
+                path = []
+                step = target
+                while step is not None:
+                    path.append(step)
+                    step = parent[step]
+                path.reverse()
+                return path  # Return the path from start to target
+
+            # Explore neighbors
             for direction in directions:
                 new_row, new_col = current[0] + direction[0], current[1] + direction[1]
                 new_position = (new_row, new_col)
 
-                if 0 <= new_row < rows and 0 <= new_col <cols and new_position not in visited:
-                    if physics_tilemap[new_row][new_col] != 1:
-                        queue.append(new_position)
-                        visited.add(new_position)
-                        parent[new_position] = current
-        
-        if target in parent:
-            path = []
-            step = target
-            while step is not None:
-                path.append(step)
-                step = parent[step]
-            path.reverse()
-            return path
-        else:
-            return None
+                # Check if the new position is within bounds, has not been visited, and is not an impassable cell (1)
+                if (0 <= new_row < rows and 0 <= new_col < cols and
+                        new_position not in visited and physics_tilemap[new_row][new_col] != 1):
+                    
+                    queue.append(new_position)
+                    visited.add(new_position)
+                    parent[new_position] = current
+
+        # If we exhaust the queue and do not find the target, return None
+        return None
         
 
     def construct_path(self, physics_tilemap):

@@ -368,14 +368,15 @@ class Tilemap:
                     self.physics_tilemap[i][j] = 0
                 if self.physics_tilemap[i][j] == 3 and entity_type == 'enemy':
                     self.physics_tilemap[i][j] = 0
-        entity_x = int(pos[0] // self.tile_size)
-        entity_y = int(pos[1] // self.tile_size)
+        entity_x = int((pos[0]) // self.tile_size)
+        entity_y = int((pos[1]) // self.tile_size)
         if entity_y > len(self.physics_tilemap) - 1:
             return
         if entity_x > len(self.physics_tilemap[entity_y]) - 1:
             return
         if entity_type == 'player':
             self.physics_tilemap[entity_y][entity_x] = 2
+
         else:
             self.physics_tilemap[entity_y][entity_x] = 3
         return self.physics_tilemap
