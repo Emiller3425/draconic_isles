@@ -201,7 +201,10 @@ class Player(PhysicsEntity):
             with open('save_files/save.json', 'w') as save_file:
                 json.dump(data, save_file)
         
-        self.game.reset_enemies()
+        
+            self.game.reset_enemies()
+            self.game.fade_out()
+            self.game.upgrade_screen()
     
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
 
@@ -264,6 +267,7 @@ class Player(PhysicsEntity):
         self.knockback_velocity = [0, 0]
         self.is_facing = 'down'
         self.set_action('idle_down')
+        self.game.reset_enemies()
 
     def apply_knockback(self, knockback_vector, knockback_strength):
         distance = max(1, (knockback_vector[0] ** 2 + knockback_vector[1] ** 2) ** 0.5)
@@ -466,14 +470,11 @@ class Enemy(PhysicsEntity):
             movement_x = [False, False]
             movement_y = [False, False]
 
-            # TODO Some weird movement sometimes and also can't navigate to the player on the bridge, close though
-            # main issue is the pos can be a float, and this causes issues with the pathfinding, also the frequency of calling
-            # the slgo could be causing issues too.
             # Start pursuit
             
-            if distance < 100:
+            if distance < 75:
                 self.pursuit = True
-                if self.path is None or self.path[len(self.path) - 1] != (self.game.player.pos[1] // 16, self.game.player.pos[0] // 16):
+                if self.path is None or self.path[len(self.path) - 1] != ((self.game.player.pos[1] + 4) // 16, (self.game.player.pos[0] + 7) // 16):
                     tilemap = self.game.tilemap.insert_entity_into_physics_tilemap(self.pos, 'enemy')
                     self.path = self.construct_path(tilemap)
                     self.pursuit_direction = None
@@ -501,13 +502,14 @@ class Enemy(PhysicsEntity):
                             self.current_tile = self.path[0]
                         self.traveling = True
                     if self.traveling:
-                        if self.pursuit_direction == 'right' and (self.pos[0] + 2) / 16 < self.next[1] + 0.06:
+                        # TODO better handling of this lol
+                        if self.pursuit_direction == 'right' and (self.pos[0] + 9) // 16 <= self.next[1]:
                             self.move_x = 1 * self.speed
-                        elif self.pursuit_direction == 'left' and (self.pos[0] - 2) / 16 > self.next[1] - 0.06:
+                        elif self.pursuit_direction == 'left' and (self.pos[0] - 7) // 16 >= self.next[1]:
                             self.move_x = -1 * self.speed
-                        elif self.pursuit_direction == 'up' and (self.pos[1] + 2) / 16 > self.next[0] - 0.06:
+                        elif self.pursuit_direction == 'up' and (self.pos[1] - 4) // 16 >= self.next[0]:
                             self.move_y = -1 * self.speed
-                        elif self.pursuit_direction == 'down' and (self.pos[1] - 2) / 16 < self.next[0] + 0.06:
+                        elif self.pursuit_direction == 'down' and (self.pos[1] + 12) // 16 <= self.next[0]:
                             self.move_y = 1 * self.speed
                         else: 
                             self.pursuit_direction = None
@@ -521,8 +523,16 @@ class Enemy(PhysicsEntity):
                         
 
 
-            # If outside pursuiting distance or is outside of its patrol area
-            elif self.pursuit or self.pos[0] < self.patrol_area_x[0] or self.pos[0] > self.patrol_area_x[1] or self.pos[1] < self.patrol_area_y[0] or self.pos[1] > self.patrol_area_y[1]:
+            # If was pursuiting, update patrol area once player escapes
+            elif self.pursuit:
+                self.patrol_area_x = [self.pos[0] - 50, self.pos[0] + 50]
+                self.patrol_area_y = [self.pos[1] - 50, self.pos[1] + 50]
+                self.pursuit = False
+                self.pause_counter = random.randint(10, 30)
+                self.patrol_counter = 0.5
+            elif self.pos[0] < self.patrol_area_x[0] or self.pos[0] > self.patrol_area_x[1] or self.pos[1] < self.patrol_area_y[0] or self.pos[1] > self.patrol_area_y[1]:
+                self.patrol_area_x = [self.pos[0] - 50, self.pos[0] + 50]
+                self.patrol_area_y = [self.pos[1] - 50, self.pos[1] + 50]
                 direction_x = self.patrol_area_center[0] - self.pos[0]
                 direction_y = self.patrol_area_center[1] - self.pos[1]
                 distance = max(1, (direction_x ** 2 + direction_y ** 2) ** 0.5)

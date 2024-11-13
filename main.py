@@ -117,11 +117,20 @@ class Game:
                 self.main()
 
     # Handles all logic in the start screen when the game is initially booted up
+    # TODO Any enemies that dies need to be readded to this array
     def reset_enemies(self):
-        for enemy in self.enemies:
-            print(enemy.pos)
-            print(enemy.spawn_point)
-            enemy.pos = enemy.spawn_point.copy()
+        self.enemies.clear()
+        for k in self.tilemap.object_layers:
+            for v in self.tilemap.object_layers[k]['positions']:
+                if k == 'skeleton':
+                    self.enemies.append(Enemy(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), (14, 16), (14, 6)))
+            
+
+    def fade_out(self):
+        pass
+
+    def upgrade_screen(self):
+        pass
 
     def start_screen(self):
         self.screen.fill((0, 0, 0))
