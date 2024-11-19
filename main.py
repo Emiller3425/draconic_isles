@@ -31,6 +31,7 @@ class Game:
         self.display = pygame.Surface((360, 280), pygame.SRCALPHA)
         self.clock = pygame.time.Clock()
         self.show_start_screen = True
+        self.show_upgrade_screen = False
 
         self.movement_x = [False, False]
         self.movement_y = [False, False]
@@ -43,6 +44,7 @@ class Game:
             'continue_button_greyed_out' : load_image('screens/buttons/continue_button/2.png'),
             'new_game_button': load_image('screens/buttons/new_game_button/0.png'),
             'new_game_button_hover': load_image('screens/buttons/new_game_button/1.png'),
+            'upgrade_screen' : load_image('screens/upgrade_screen/0.png'),
             'player': load_images('player/'),
             'skeleton': load_images('skeleton/'),
             'walls': load_images('walls/'),
@@ -127,10 +129,33 @@ class Game:
             
 
     def fade_out(self):
+        self.show_upgrade_screen = True
         pass
 
     def upgrade_screen(self):
-        pass
+        self.screen.fill((0,0,0))
+        # self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
+        self.screen.blit(pygame.transform.scale(self.assets['upgrade_screen'], (self.screen.get_width() - 200, self.screen.get_height() - 200)), (100,100))
+        pygame.display.update()
+        while True:
+            cursor_pos = pygame.mouse.get_pos()
+            # Conditions for handling button_states based on cursor positions
+            if True:
+                pass
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                # Handle Button Clicks
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    pass
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        return
+            self.clock.tick(60)
+
+
 
     def start_screen(self):
         self.screen.fill((0, 0, 0))

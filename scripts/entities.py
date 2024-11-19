@@ -202,6 +202,7 @@ class Player(PhysicsEntity):
                 json.dump(data, save_file)
         
         
+            # trigger upgrade screen gameloop
             self.game.reset_enemies()
             self.game.fade_out()
             self.game.upgrade_screen()
