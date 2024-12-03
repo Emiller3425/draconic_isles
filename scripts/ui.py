@@ -17,7 +17,10 @@ class UI:
         self.soul_counter_card = game.assets['soul_counter_card']
         self.equipped_player_melee = equipped_player_melee
         self.equipped_player_spell = equipped_player_spell
-        self.digits = game.assets['digits']
+        self.grey_digits = game.assets['grey_digits']
+        self.red_digits = game.assets['red_digits']
+        self.blue_digits = game.assets['blue_digits']
+        self.green_digits = game.assets['green_digits']
 
 
         # Define the colors for each attribute bar
@@ -162,7 +165,7 @@ class UI:
 
 
     def render_boss_health_bar(self, surf, boss):
-        # TODO Implement boss health bar rendering when we get here hopefully by thanksgiving
+        # TODO Implement boss health bar rendering when we get here hopefully by thanksgiving 
         pass
 
     def render_souls(self, surf, player):
@@ -195,5 +198,74 @@ class UI:
 
         # Loop through and print digits
         for i in reversed_display_souls:
-            surf.blit(self.digits[int(i)], (soul_counter_card_postition[0] + 40 - left_shift, soul_counter_card_postition[1] + 6))
+            surf.blit(self.grey_digits[int(i)], (soul_counter_card_postition[0] + 40 - left_shift, soul_counter_card_postition[1] + 6))
+            left_shift += 4
+
+
+
+    # TODO Use a single function for all this rendering to fix readabillity
+
+
+
+    def render_health(self, surf, player):
+        left_shift = 0
+
+        if player.health > 9999999999:
+            display_health = "9999999999"
+        else:
+            display_health = str(player.health)
+        
+        # Get screen size for rendering
+        screen_width, screen_height = surf.get_size()
+
+        reversed_display_health = ""
+
+        for i in range(0, len(display_health)):
+            reversed_display_health += display_health[len(display_health)-i-1]
+
+                # Loop through and print digits
+        for i in reversed_display_health:
+            surf.blit(self.red_digits[int(i)], (500 - left_shift, 40 + 6))
+            left_shift += 4
+
+    def render_stamina(self, surf, player):
+        left_shift = 0
+
+        if player.stamina > 9999999999:
+            display_stamina = "9999999999"
+        else:
+            display_stamina = str(player.stamina)
+        
+        # Get screen size for rendering
+        screen_width, screen_height = surf.get_size()
+
+        reversed_display_stamina = ""
+
+        for i in range(0, len(display_stamina)):
+            reversed_display_stamina += display_stamina[len(display_stamina)-i-1]
+
+                # Loop through and print digits
+        for i in reversed_display_stamina:
+            surf.blit(self.green_digits[int(i)], (500 - left_shift, 60 + 6))
+            left_shift += 4
+
+    def render_mana(self, surf, player):
+        left_shift = 0
+
+        if player.mana > 9999999999:
+            display_mana = "9999999999"
+        else:
+            display_mana = str(player.mana)
+        
+        # Get screen size for rendering
+        screen_width, screen_height = surf.get_size()
+
+        reversed_display_mana = ""
+
+        for i in range(0, len(display_mana)):
+            reversed_display_mana += display_mana[len(display_mana)-i-1]
+
+        # Loop through and print digits
+        for i in reversed_display_mana:
+            surf.blit(self.blue_digits[int(i)], (500 - left_shift, 80 + 6))
             left_shift += 4

@@ -183,9 +183,16 @@ class Player(PhysicsEntity):
     def rest_at_bonfire(self):
         if len(self.nearby_bonfires) > 0:
             self.spawn_point = [self.nearby_bonfire_objects[0].pos[0] + 8, self.nearby_bonfire_objects[0].pos[1] + 32]
+            self.pos = self.spawn_point.copy()
             self.health = self.max_health
             self.stamina = self.max_stamina
             self.mana = self.max_mana
+            self.is_facing = 'down'
+            self.game.movement_x[0] = False
+            self.game.movement_x[1] = False
+            self.game.movement_y[0] = False
+            self.game.movement_y[1] = False
+            self.set_action('idle_down')
 
             # Information to save into JSON file
             data = {
@@ -473,7 +480,7 @@ class Enemy(PhysicsEntity):
 
             # Start pursuit
             
-            if distance < 75:
+            if distance < 75 or (distance < 100 and self.pursuit):
                 self.pursuit = True
                 if self.path is None or self.path[len(self.path) - 1] != ((self.game.player.pos[1] + 4) // 16, (self.game.player.pos[0] + 7) // 16):
                     tilemap = self.game.tilemap.insert_entity_into_physics_tilemap(self.pos, 'enemy')

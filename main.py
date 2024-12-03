@@ -38,7 +38,7 @@ class Game:
 
         self.assets = {
             'title_screen': load_image('screens/title_screen/0.png'),
-            'title_screen/animation': load_images('screens/title_screen/animation'),
+            'title_screen/animation': Animation(load_images('screens/title_screen/animation'), img_dur = 7),
             'continue_button': load_image('screens/buttons/continue_button/0.png'),
             'continue_button_hover' : load_image('screens/buttons/continue_button/1.png'),
             'continue_button_greyed_out' : load_image('screens/buttons/continue_button/2.png'),
@@ -94,7 +94,10 @@ class Game:
             'lava': load_images('lava/'),
             'lava/animation' : Animation(load_images('lava/animation'), img_dur=20),
             'f_key': load_image('keys/f_key/0.png'),
-            'digits' : load_images('digits'),
+            'grey_digits' : load_images('digits/grey_digits'),
+            'red_digits' : load_images('digits/red_digits'),
+            'green_digits' : load_images('digits/green_digits'),
+            'blue_digits' : load_images('digits/blue_digits'),
             'drop' : load_image('drops/souls/0.png'),
         }
 
@@ -136,11 +139,15 @@ class Game:
         self.screen.fill((0,0,0))
         # self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
         self.screen.blit(pygame.transform.scale(self.assets['upgrade_screen'], (self.screen.get_width() - 200, self.screen.get_height() - 200)), (100,100))
+        self.ui.render_health(self.screen, self.player)
+        self.ui.render_stamina(self.screen, self.player)
+        self.ui.render_mana(self.screen, self.player)
         pygame.display.update()
         while True:
             cursor_pos = pygame.mouse.get_pos()
             # Conditions for handling button_states based on cursor positions
             if True:
+                self.ui.render_health(self.screen, self.player)
                 pass
 
             for event in pygame.event.get():
@@ -162,6 +169,8 @@ class Game:
 
         self.screen.blit(pygame.transform.scale(self.assets['title_screen'], self.screen.get_size()), (0,0))
 
+        self.animation = self.assets['title_screen/animation']
+
         self.screen.blit(self.assets['new_game_button'], (self.screen.get_width() // 2 - self.assets['new_game_button'].get_width() // 2, 400))
         new_game_rect = pygame.Rect(self.screen.get_width() // 2 - self.assets['new_game_button'].get_width() // 2, 400, self.assets['new_game_button'].get_width(), self.assets['new_game_button'].get_height())
 
@@ -172,6 +181,7 @@ class Game:
 
         # TODO Fix handling for continue and new game when we get to end state
         while True:
+            self.screen.blit(pygame.transform.scale(self.animation.img(), self.screen.get_size()), (0,0))
             cursor_pos = pygame.mouse.get_pos()
             if new_game_rect.collidepoint(cursor_pos):
                 self.screen.blit(self.assets['new_game_button_hover'], (self.screen.get_width() // 2 - self.assets['new_game_button_hover'].get_width() // 2, 400))
@@ -198,6 +208,8 @@ class Game:
                         self.show_start_screen = False
                         self.continue_save = True
                         return
+                    
+            self.animation.update()
                     
             pygame.display.update()
             self.clock.tick(60)
