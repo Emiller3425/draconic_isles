@@ -21,6 +21,10 @@ class UI:
         self.red_digits = game.assets['red_digits']
         self.blue_digits = game.assets['blue_digits']
         self.green_digits = game.assets['green_digits']
+        self.upgrade_arrow = game.assets['upgrade_arrow']
+        self.upgrade_arrow_hover = game.assets['upgrade_arrow_hover']
+        self.downgrade_arrow = game.assets['downgrade_arrow']
+        self.downgrade_arrow_hover = game.assets['downgrade_arrow_hover']
 
 
         # Define the colors for each attribute bar
@@ -205,15 +209,13 @@ class UI:
 
     # TODO Use a single function for all this rendering to fix readabillity
 
-
-
     def render_health(self, surf, player):
         left_shift = 0
 
-        if player.health > 9999999999:
+        if player.max_health > 9999999999:
             display_health = "9999999999"
         else:
-            display_health = str(player.health)
+            display_health = str(player.max_health)
         
         # Get screen size for rendering
         screen_width, screen_height = surf.get_size()
@@ -225,16 +227,19 @@ class UI:
 
                 # Loop through and print digits
         for i in reversed_display_health:
-            surf.blit(self.red_digits[int(i)], (500 - left_shift, 40 + 6))
-            left_shift += 4
+            pygame.transform.scale(self.red_digits[int(i)], surf.get_size())
+            # TODO draw out th rest of the upgrade screen and how we want it.
+            # How we will transform sizes of digits and shit
+            surf.blit(pygame.transform.scale(self.red_digits[int(i)], (surf.get_width() - 710, surf.get_height() - 585)), (420 - left_shift, 155 + 6))
+            left_shift += 12
 
     def render_stamina(self, surf, player):
         left_shift = 0
 
-        if player.stamina > 9999999999:
+        if player.max_stamina > 9999999999:
             display_stamina = "9999999999"
         else:
-            display_stamina = str(player.stamina)
+            display_stamina = str(player.max_stamina)
         
         # Get screen size for rendering
         screen_width, screen_height = surf.get_size()
@@ -246,16 +251,16 @@ class UI:
 
                 # Loop through and print digits
         for i in reversed_display_stamina:
-            surf.blit(self.green_digits[int(i)], (500 - left_shift, 60 + 6))
-            left_shift += 4
+            surf.blit(pygame.transform.scale(self.green_digits[int(i)], (surf.get_width() - 710, surf.get_height() - 585)), (420 - left_shift, 275 + 6))
+            left_shift += 12
 
     def render_mana(self, surf, player):
         left_shift = 0
 
-        if player.mana > 9999999999:
+        if player.max_mana > 9999999999:
             display_mana = "9999999999"
         else:
-            display_mana = str(player.mana)
+            display_mana = str(player.max_mana)
         
         # Get screen size for rendering
         screen_width, screen_height = surf.get_size()
@@ -267,5 +272,5 @@ class UI:
 
         # Loop through and print digits
         for i in reversed_display_mana:
-            surf.blit(self.blue_digits[int(i)], (500 - left_shift, 80 + 6))
-            left_shift += 4
+            surf.blit(pygame.transform.scale(self.blue_digits[int(i)], (surf.get_width() - 710, surf.get_height() - 585)), (420 - left_shift, 395 + 6))
+            left_shift += 12

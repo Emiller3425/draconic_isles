@@ -99,8 +99,13 @@ class Game:
             'green_digits' : load_images('digits/green_digits'),
             'blue_digits' : load_images('digits/blue_digits'),
             'drop' : load_image('drops/souls/0.png'),
+            'upgrade_arrow' : load_image('ui/arrows/upgrade_arrow/upgrade_arrow.png'),
+            'upgrade_arrow_hover' : load_image('ui/arrows/upgrade_arrow/upgrade_arrow_hover.png'),
+            'downgrade_arrow' : load_image('ui/arrows/downgrade_arrow/downgrade_arrow.png'),
+            'downgrade_arrow_hover' : load_image('ui/arrows/downgrade_arrow/downgrade_arrow_hover.png'),
+            'upgrade_arrow_greyed_out' : load_image('ui/arrows/upgrade_arrow/upgrade_arrow_greyed_out.png'),
+            'downgrade_arrow_greyed_out' : load_image('ui/arrows/downgrade_arrow/downgrade_arrow_greyed_out.png'),
         }
-
         self.audio = {
             # TODO audio lol retard
         }
@@ -136,19 +141,84 @@ class Game:
         pass
 
     def upgrade_screen(self):
-        self.screen.fill((0,0,0))
-        # self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
-        self.screen.blit(pygame.transform.scale(self.assets['upgrade_screen'], (self.screen.get_width() - 200, self.screen.get_height() - 200)), (100,100))
-        self.ui.render_health(self.screen, self.player)
-        self.ui.render_stamina(self.screen, self.player)
-        self.ui.render_mana(self.screen, self.player)
-        pygame.display.update()
+
+        current_level = self.player.level
+        current_souls = self.player.souls
+        current_health = self.player.max_health
+        current_stamina = self.player.stamina
+        current_mana = self.player.mana
+        
+        # upgrade arrows
+        upgrade_health_arrow_rect = pygame.Rect(450, 140, 50, 50)
+        upgrade_stamina_arrow_rect = pygame.Rect(450, 260, 50, 50)
+        upgrade_mana_arrow_rect = pygame.Rect(450, 380, 50, 50)
+
+        # downgrade arrows
+        downgrade_health_arrow_rect = pygame.Rect(520, 140, 50, 50)
+        downgrade_stamina_arrow_rect = pygame.Rect(520, 260, 50, 50)
+        downgrade_mana_arrow_rect = pygame.Rect(520, 380, 50, 50)
+        
+        # for downgrade level logic while applying levels
+        health_levels_applied = 0
+        stamina_levels_applied = 0
+        mana_levels_applied = 0
+
         while True:
+            self.screen.blit(pygame.transform.scale(self.assets['upgrade_screen'], (self.screen.get_width() - 200, self.screen.get_height() - 200)), (100,100))
             cursor_pos = pygame.mouse.get_pos()
             # Conditions for handling button_states based on cursor positions
             if True:
+                # keep reugular UI on screen
+                self.ui.render(self.display, self.player)
+                self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
+
+                # Upgrade Screen
+                self.screen.blit(pygame.transform.scale(self.assets['upgrade_screen'], (self.screen.get_width() - 200, self.screen.get_height() - 200)), (100,100))
                 self.ui.render_health(self.screen, self.player)
-                pass
+                self.ui.render_stamina(self.screen, self.player)
+                self.ui.render_mana(self.screen, self.player)
+                if self.player.souls < self.player.level * 100:
+                    can_add_level = False
+                    self.screen.blit(self.assets['upgrade_arrow_greyed_out'], (450, 140))
+                    self.screen.blit(self.assets['upgrade_arrow_greyed_out'], (450, 260))
+                    self.screen.blit(self.assets['upgrade_arrow_greyed_out'], (450, 380))
+                else:
+                    can_add_level = True
+                    # upgrade arrows
+                    if upgrade_health_arrow_rect.collidepoint(cursor_pos):
+                        self.screen.blit(self.assets['upgrade_arrow_hover'], (450, 140))
+                    else:
+                        self.screen.blit(self.assets['upgrade_arrow'], (450, 140))
+                    if upgrade_stamina_arrow_rect.collidepoint(cursor_pos):
+                        self.screen.blit(self.assets['upgrade_arrow_hover'], (450, 260))
+                    else:
+                        self.screen.blit(self.assets['upgrade_arrow'], (450, 260))
+                    if upgrade_mana_arrow_rect.collidepoint(cursor_pos):
+                        self.screen.blit(self.assets['upgrade_arrow_hover'], (450, 380))
+                    else:
+                        self.screen.blit(self.assets['upgrade_arrow'], (450, 380))
+                # downgrade arrows
+                if self.player.max_health > current_health:
+                    if downgrade_health_arrow_rect.collidepoint(cursor_pos):
+                        self.screen.blit(self.assets['downgrade_arrow_hover'], (520, 140))
+                    else:
+                        self.screen.blit(self.assets['downgrade_arrow'], (520, 140))
+                else:
+                    self.screen.blit(self.assets['downgrade_arrow_greyed_out'], (520, 140))
+                if self.player.max_stamina > current_stamina:
+                    if downgrade_stamina_arrow_rect.collidepoint(cursor_pos):
+                        self.screen.blit(self.assets['downgrade_arrow_hover'], (520, 260))
+                    else:
+                        self.screen.blit(self.assets['downgrade_arrow'], (520, 260))
+                else:
+                    self.screen.blit(self.assets['downgrade_arrow_greyed_out'], (520, 260))
+                if self.player.max_mana > current_mana:
+                    if downgrade_mana_arrow_rect.collidepoint(cursor_pos):
+                        self.screen.blit(self.assets['downgrade_arrow_hover'], (520, 380))
+                    else:
+                        self.screen.blit(self.assets['downgrade_arrow'], (520, 380))
+                else:
+                    self.screen.blit(self.assets['downgrade_arrow_greyed_out'], (520, 380))
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -156,10 +226,53 @@ class Game:
                     sys.exit()
                 # Handle Button Clicks
                 if event.type == pygame.MOUSEBUTTONDOWN:
+                    # upgrade arrows
+                    if can_add_level:
+                        if upgrade_health_arrow_rect.collidepoint(event.pos):
+                            self.player.souls -= 100
+                            self.player.max_health += 100
+                            self.player.level += 1
+                            health_levels_applied  += 1
+                        if upgrade_stamina_arrow_rect.collidepoint(event.pos):
+                            self.player.souls -= 100
+                            self.player.max_stamina += 100
+                            self.player.level += 1
+                            stamina_levels_applied += 1
+                        if upgrade_mana_arrow_rect.collidepoint(event.pos):
+                            self.player.souls -= 100
+                            self.player.max_mana += 100
+                            self.player.level += 1
+                            mana_levels_applied += 1
+                    # downgrade arrows
+                    if downgrade_health_arrow_rect.collidepoint(event.pos) and health_levels_applied > 0:
+                        self.player.souls += 100
+                        self.player.max_health -= 100
+                        self.player.level -= 1
+                        health_levels_applied -= 1
+                    if downgrade_stamina_arrow_rect.collidepoint(event.pos) and stamina_levels_applied > 0:
+                        self.player.souls += 100
+                        self.player.max_stamina -= 100
+                        self.player.level -= 1
+                        stamina_levels_applied -= 1
+                    if downgrade_mana_arrow_rect.collidepoint(event.pos) and mana_levels_applied > 0:
+                        self.player.souls += 100
+                        self.player.max_mana -= 100
+                        self.player.level -= 1
+                        mana_levels_applied -= 1
                     pass
+
+                    # confirm level-up handling
+                        # TODO
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
+                        self.player.max_health = current_health
+                        self.player.max_stamina = current_stamina
+                        self.player.max_mana = current_mana
+                        self.player.souls = current_souls
+                        self.player.level = current_level
                         return
+                    
+            pygame.display.update()
             self.clock.tick(60)
 
 
