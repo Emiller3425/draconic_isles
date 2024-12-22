@@ -264,17 +264,17 @@ class Game:
                             mana_levels_applied += 1
                     # downgrade arrows
                     if downgrade_health_arrow_rect.collidepoint(event.pos) and health_levels_applied > 0:
-                        self.player.souls += self.player.level * 100
+                        self.player.souls += (self.player.level - 1) * 100
                         self.player.max_health -= 10
                         self.player.level -= 1
                         health_levels_applied -= 1
                     if downgrade_stamina_arrow_rect.collidepoint(event.pos) and stamina_levels_applied > 0:
-                        self.player.souls += self.player.level * 100
+                        self.player.souls += (self.player.level - 1) * 100
                         self.player.max_stamina -= 10
                         self.player.level -= 1
                         stamina_levels_applied -= 1
                     if downgrade_mana_arrow_rect.collidepoint(event.pos) and mana_levels_applied > 0:
-                        self.player.souls += self.player.level * 100
+                        self.player.souls += (self.player.level - 1) * 100
                         self.player.max_mana -= 10
                         self.player.level -= 1
                         mana_levels_applied -= 1
