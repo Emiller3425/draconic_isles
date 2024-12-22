@@ -308,8 +308,11 @@ class Game:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.player.max_health = current_health
+                        self.player.health = self.player.max_health
                         self.player.max_stamina = current_stamina
+                        self.player.stamina = self.player.max_stamina
                         self.player.max_mana = current_mana
+                        self.player.mana = self.player.max_mana
                         self.player.souls = current_souls
                         self.player.level = current_level
                         return
