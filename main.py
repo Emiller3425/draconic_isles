@@ -29,6 +29,7 @@ class Game:
         self.screen = pygame.display.set_mode((720, 600))
         self.screen.fill((0, 0, 0))
         self.display = pygame.Surface((360, 280), pygame.SRCALPHA)
+        self.upgrade_screen_display = pygame.Surface((360, 280), pygame.SRCALPHA)
         self.clock = pygame.time.Clock()
         self.show_start_screen = True
         self.show_upgrade_screen = False
@@ -105,6 +106,10 @@ class Game:
             'downgrade_arrow_hover' : load_image('ui/arrows/downgrade_arrow/downgrade_arrow_hover.png'),
             'upgrade_arrow_greyed_out' : load_image('ui/arrows/upgrade_arrow/upgrade_arrow_greyed_out.png'),
             'downgrade_arrow_greyed_out' : load_image('ui/arrows/downgrade_arrow/downgrade_arrow_greyed_out.png'),
+            'confirm_button' : load_image('screens/buttons/confirm_button/confirm_button.png'),
+            'confirm_button_hover' : load_image('screens/buttons/confirm_button/confirm_button_hover.png'),
+            'confirm_button_greyed_out' : load_image('screens/buttons/confirm_button/confirm_button_greyed_out.png'),
+            'next_level' : load_image('ui/next_level.png')
         }
         self.audio = {
             # TODO audio lol retard
@@ -157,6 +162,9 @@ class Game:
         downgrade_health_arrow_rect = pygame.Rect(520, 140, 50, 50)
         downgrade_stamina_arrow_rect = pygame.Rect(520, 260, 50, 50)
         downgrade_mana_arrow_rect = pygame.Rect(520, 380, 50, 50)
+
+        # confirm button
+        confirm_button_rect = pygame.Rect(520, 500, 100, 50)
         
         # for downgrade level logic while applying levels
         health_levels_applied = 0
@@ -174,6 +182,8 @@ class Game:
 
                 # Upgrade Screen
                 self.screen.blit(pygame.transform.scale(self.assets['upgrade_screen'], (self.screen.get_width() - 200, self.screen.get_height() - 200)), (100,100))
+                self.screen.blit(self.assets['next_level'], (400, 500))
+                self.ui.render_next_level(self.screen, self.player.level),
                 self.ui.render_health(self.screen, self.player)
                 self.ui.render_stamina(self.screen, self.player)
                 self.ui.render_mana(self.screen, self.player)
@@ -219,6 +229,15 @@ class Game:
                         self.screen.blit(self.assets['downgrade_arrow'], (520, 380))
                 else:
                     self.screen.blit(self.assets['downgrade_arrow_greyed_out'], (520, 380))
+                
+                # Confirm Button
+                if health_levels_applied > 0 or stamina_levels_applied > 0 or mana_levels_applied > 0:
+                    if confirm_button_rect.collidepoint(cursor_pos):
+                        self.screen.blit(self.assets['confirm_button_hover'], (520, 500))
+                    else:
+                        self.screen.blit(self.assets['confirm_button'], (520, 500))
+                else:
+                    self.screen.blit(self.assets['confirm_button_greyed_out'], (520, 500))
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -229,40 +248,63 @@ class Game:
                     # upgrade arrows
                     if can_add_level:
                         if upgrade_health_arrow_rect.collidepoint(event.pos):
-                            self.player.souls -= 100
-                            self.player.max_health += 100
+                            self.player.souls -= self.player.level * 100
+                            self.player.max_health += 10
                             self.player.level += 1
                             health_levels_applied  += 1
                         if upgrade_stamina_arrow_rect.collidepoint(event.pos):
-                            self.player.souls -= 100
-                            self.player.max_stamina += 100
+                            self.player.souls -= self.player.level * 100
+                            self.player.max_stamina += 10
                             self.player.level += 1
                             stamina_levels_applied += 1
                         if upgrade_mana_arrow_rect.collidepoint(event.pos):
-                            self.player.souls -= 100
-                            self.player.max_mana += 100
+                            self.player.souls -= self.player.level * 100
+                            self.player.max_mana += 10
                             self.player.level += 1
                             mana_levels_applied += 1
                     # downgrade arrows
                     if downgrade_health_arrow_rect.collidepoint(event.pos) and health_levels_applied > 0:
-                        self.player.souls += 100
-                        self.player.max_health -= 100
+                        self.player.souls += self.player.level * 100
+                        self.player.max_health -= 10
                         self.player.level -= 1
                         health_levels_applied -= 1
                     if downgrade_stamina_arrow_rect.collidepoint(event.pos) and stamina_levels_applied > 0:
-                        self.player.souls += 100
-                        self.player.max_stamina -= 100
+                        self.player.souls += self.player.level * 100
+                        self.player.max_stamina -= 10
                         self.player.level -= 1
                         stamina_levels_applied -= 1
                     if downgrade_mana_arrow_rect.collidepoint(event.pos) and mana_levels_applied > 0:
-                        self.player.souls += 100
-                        self.player.max_mana -= 100
+                        self.player.souls += self.player.level * 100
+                        self.player.max_mana -= 10
                         self.player.level -= 1
                         mana_levels_applied -= 1
                     pass
 
                     # confirm level-up handling
-                        # TODO
+                    if confirm_button_rect.collidepoint(event.pos) and (health_levels_applied > 0 or stamina_levels_applied > 0 or mana_levels_applied > 0):
+                        current_health = self.player.max_health
+                        current_stamina = self.player.max_stamina
+                        current_mana = self.player.max_mana
+                        current_souls = self.player.souls
+                        current_level = self.player.level
+                        health_levels_applied = 0
+                        stamina_levels_applied = 0
+                        mana_levels_applied = 0
+
+                        data = {
+                        'max_health' : self.player.max_health,
+                        'max_stamina' : self.player.max_stamina,
+                        'max_mana' : self.player.max_mana,
+                        'souls' : self.player.souls,
+                        'equipped_melee' : self.player.equipped_melee,
+                        'equipped_spell' : self.player.equipped_spell,
+                        'spawn_point' : self.player.spawn_point,
+                        'level' : self.player.level
+                        }
+
+                        with open('save_files/save.json', 'w') as save_file:
+                            json.dump(data, save_file)
+                        
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.player.max_health = current_health
@@ -401,6 +443,7 @@ class Game:
             self.player.max_stamina = data['max_stamina']
             self.player.max_mana = data['max_mana']
             self.player.souls = data['souls']
+            self.player.level = data['level']
             self.player.equipped_melee = data['equipped_melee']
             self.player.equipped_spell = data['equipped_spell']
             self.player.spawn_point = data['spawn_point']

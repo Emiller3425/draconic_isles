@@ -208,6 +208,25 @@ class UI:
 
 
     # TODO Use a single function for all this rendering to fix readabillity
+    def render_next_level(self, surf, level):
+        # Shift for each digit rendering
+        left_shift = 0
+        
+        # Max number that can be displayed on the soul counter card
+        display_souls = str(level* 100)
+
+
+        # Empty string to hold the revered string of souls
+        reversed_display_souls = ""
+
+        # Reverse the string for rendering because we render left --> right in the soul_counter_card
+        for i in range(0, len(display_souls)):
+            reversed_display_souls += display_souls[len(display_souls)-i-1]
+            
+        # Loop through and print digits
+        for i in reversed_display_souls:
+            surf.blit(pygame.transform.scale(self.grey_digits[int(i)], (surf.get_width() - 713, surf.get_height() - 587)), (485 - left_shift, 520 + 6))
+            left_shift += 9
 
     def render_health(self, surf, player):
         left_shift = 0

@@ -203,7 +203,8 @@ class Player(PhysicsEntity):
             'souls' : self.souls,
             'equipped_melee' : self.equipped_melee,
             'equipped_spell' : self.equipped_spell,
-            'spawn_point' : self.spawn_point
+            'spawn_point' : self.spawn_point,
+            'level' : self.level
             }
 
             with open('save_files/save.json', 'w') as save_file:
