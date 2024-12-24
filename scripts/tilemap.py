@@ -9,6 +9,7 @@ NEIGHBORS_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1
 
 # Physics tile types
 PHYSICS_TILE_TYPES = {
+    'torch',
     'walls', 
     'bush', 
     'light', 
@@ -64,6 +65,9 @@ PHYSICS_TILE_HITBOXES = {
     'gold_chest': {
         0: (16, 16),
     },
+    'torch' : {
+        0: (16, 16),
+    }
 }
 
 # If over a physics layer tile will negate the physcis
@@ -92,12 +96,12 @@ class Tilemap:
             'player' : {'positions': [], 'variants': []},
             'skeleton' : {'positions': [], 'variants': []},
             'bonfire' : {'positions': [], 'variants': []},
-            # Animation Physics Objects
-            # 'bush' : {'positions': [], 'variants': []},
-            'tree' : {'positions': [], 'variants': []},
             'bronze_chest' : {'positions': [], 'variants': []},
             'silver_chest' : {'positions': [], 'variants': []},
             'gold_chest' : {'positions': [], 'variants': []},
+            # Animation Physics Objects
+            # 'bush' : {'positions': [], 'variants': []},
+            'tree' : {'positions': [], 'variants': []},
         }
 
         # Always rendered under the player, non y-sorted animated tiles
@@ -106,6 +110,7 @@ class Tilemap:
             'lava' : {'positions': [], 'variants': []},
             'red_flower': {'positions': [], 'variants': []},
             'purple_flower': {'positions': [], 'variants': []},
+            'torch' : {'positions': [], 'variants': []},
         }
 
         self.offgrid_tiles = []

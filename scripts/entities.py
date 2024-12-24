@@ -159,6 +159,7 @@ class Player(PhysicsEntity):
         self.is_melee_attacking = False
         self.nearby_bonfires = []
         self.nearby_bonfire_objects = []
+        self.inventory = []
 
         self.attack_cooldowns = {
             'melee': {'current': 0, 'max': 30},
@@ -209,7 +210,7 @@ class Player(PhysicsEntity):
             'equipped_melee' : self.equipped_melee,
             'equipped_spell' : self.equipped_spell,
             'spawn_point' : self.spawn_point,
-            'level' : self.level
+            'level' : self.level,
             }
 
             with open('save_files/save.json', 'w') as save_file:

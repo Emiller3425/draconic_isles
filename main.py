@@ -57,8 +57,11 @@ class Game:
             'walls': load_images('walls/'),
             # ground types
             'ground': load_images('ground/'),
-            # lights
+            # lamp
             'light': load_images('light/'),
+            #torch
+            'torch' : load_image('torch/0.png'),
+            'torch/animation' : Animation(load_images('torch/animation'), img_dur=10),
             # trees
             'tree': load_images('tree/'),
             'tree/animation' :  Animation(load_images('tree/animation'), img_dur=60),
@@ -441,6 +444,8 @@ class Game:
         self.lights = []
         # lamp particle spawners
         self.lamp_particle_spawners = []
+        # torch particle spawners
+        self.torch_particle_spawners = []
         # smoke particle spawners
         self.smoke_particle_spawners = []
         # drop particle spawners
@@ -473,7 +478,7 @@ class Game:
         # Animated objects
         for k in self.tilemap.animated_layers:
             for v in self.tilemap.animated_layers[k]['positions']:
-                if 'flower' in k:
+                if 'flower' in k or 'torch' in k:
                     self.animated_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), frame = random.randint(0, len(self.assets[k+'/animation'].images))))
                 else:
                     self.animated_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), frame = 0))
@@ -501,9 +506,13 @@ class Game:
         self.ui = UI(self, self.player, self.player.equipped_melee, self.player.equipped_spell)
 
         # Get all light objects
-        for light in self.tilemap.extract([('light', 0)], keep=True):
-            self.lights.append(Light(self, light['pos'], 20, [20, 20, 0]))
-            self.lamp_particle_spawners.append(pygame.rect.Rect(light['pos'][0], light['pos'][1], 16, 16))
+        for light in self.tilemap.extract([('light', 0), ('torch', 0)], keep=True):
+            if light['type']== 'light':
+                self.lights.append(Light(self, light['pos'], 20, [20, 20, 0]))
+                self.lamp_particle_spawners.append(pygame.rect.Rect(light['pos'][0], light['pos'][1], 16, 16))
+            elif light['type'] == 'torch':
+                self.lights.append(Light(self, light['pos'], 20, [40, 20, 0]))
+                self.torch_particle_spawners.append(pygame.rect.Rect(light['pos'][0], light['pos'][1], 16, 16))
         
         for bonfire in self.bonfires:
             self.smoke_particle_spawners.append(pygame.rect.Rect(bonfire.pos[0] + 8, bonfire.pos[1] - 18, 16, 16))
@@ -575,7 +584,12 @@ class Game:
                     self.projectiles.remove(projectile)
                 else:
                     self.render_order_objects.append((projectile, projectile.pos[1]))
-            
+
+            # Torches need to be rendered after walls
+            for animated in self.animated_objects:
+                if animated.type == 'torch':
+                    self.render_order_objects.append((animated, animated.pos[1]))
+
             for animated in self.animated_physics_objects:
                 self.render_order_objects.append((animated, animated.pos[1]))
 
@@ -645,6 +659,11 @@ class Game:
                 if random.random() < 0.002:
                     pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
                     self.particles.append(Particle(self, 'lamp_particle', pos, velocity=[-0.15, 0.3], frame=random.randint(0, 10)))
+            
+            for rect in self.torch_particle_spawners:
+                if random.random() < 0.5:
+                    pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
+                    self.particles.append(Particle(self, 'lamp_particle', pos, velocity=[random.uniform(-0.15, 0.15), random.uniform(-0.3, 0.3)], frame=random.randint(0, 10)))
 
             for rect in self.smoke_particle_spawners:
                 if random.random() < 0.5:

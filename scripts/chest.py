@@ -5,6 +5,8 @@ import json
 
 from scripts.light import Light
 
+
+# TODO enable chests to drop items
 class Chest:
     def __init__(self, game, pos, type):
         self.game = game
