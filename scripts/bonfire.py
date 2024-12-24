@@ -5,9 +5,7 @@ import json
 
 from scripts.light import Light
 
-# TODO The bonfire class is used to create a bonfire which acts as a save point for the player when they die, 
-# players can interact with to set spawn and can also fast travel in between,
-# May introduce upgrade system later with this
+# TODO Fast Travel Betwee Bonfires
 class Bonfire:
     def __init__(self, game, pos):
         self.game = game
@@ -26,11 +24,10 @@ class Bonfire:
                    self.pos[1] - offset[1] + self.anim_offset[1]))
         
     def render_interact(self, surf, offset=(0,0)):
+        offset = (offset[0] - 8, offset[1] + 16)
         surf.blit(pygame.transform.flip(self.game.assets['f_key'].copy(), self.flip, False), 
                 (self.pos[0] - offset[0] + self.anim_offset[0], 
                 self.pos[1] - offset[1] + self.anim_offset[1]))
-        
-    def save_game(self, ):
-        pass
+    
         
 

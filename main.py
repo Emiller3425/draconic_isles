@@ -18,6 +18,7 @@ from scripts.weather import Weather
 from scripts.bonfire import Bonfire
 from scripts.animated import Animated
 from scripts.drop import Drop
+from scripts.chest import Chest
 
 
 class Game:
@@ -139,9 +140,12 @@ class Game:
             # next level ui piece
             'next_level' : load_image('ui/next_level.png'),
             # chests
-            'bronze_chest' : load_image('chests/bronze_chest/0.png'),
-            'silver_chest' : load_image('chests/silver_chest/0.png'),
-            'gold_chest' : load_image('chests/gold_chest/0.png')
+            'bronze_chest' : load_image('bronze_chest/0.png'),
+            'silver_chest' : load_image('silver_chest/0.png'),
+            'gold_chest' : load_image('gold_chest/0.png'),
+            'bronze_chest_animation' : Animation(load_images('bronze_chest/animation/'), img_dur=5, loop=False),
+            'silver_chest_animation' : Animation(load_images('silver_chest/animation/'), img_dur=5, loop=False),
+            'gold_chest_animation' : Animation(load_images('gold_chest/animation/'), img_dur=5, loop=False),
         }
         self.audio = {
             # TODO audio lol retard
@@ -177,6 +181,7 @@ class Game:
         self.show_upgrade_screen = True
         pass
 
+    # TODO: Add general pause screen when at bonfires to enable fast travel
     def upgrade_screen(self):
 
         current_level = self.player.level
@@ -353,7 +358,6 @@ class Game:
             self.clock.tick(60)
 
 
-
     def start_screen(self):
         self.screen.fill((0, 0, 0))
 
@@ -427,6 +431,8 @@ class Game:
         self.enemies = []
         # Bonfires
         self.bonfires = []
+        # chests
+        self.chests = []
         # Y-sorted animatied objects
         self.animated_physics_objects = []
         # Rendred first animated objects
@@ -456,6 +462,12 @@ class Game:
                     self.enemies.append(Enemy(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), (14, 16), (14, 6)))
                 elif k =='bonfire':
                     self.bonfires.append(Bonfire(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size)))
+                elif k == 'bronze_chest':
+                    self.chests.append(Chest(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), 0))
+                elif k == 'silver_chest':
+                    self.chests.append(Chest(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), 1))
+                elif k == 'gold_chest':
+                    self.chests.append(Chest(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), 2))
                 else:
                     self.animated_physics_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), frame = 0))
         # Animated objects
@@ -512,6 +524,10 @@ class Game:
             for bonfire in self.bonfires:
                 bonfire.update()
 
+            for chest in self.chests:
+                if chest.is_opened:
+                    chest.update()
+
             for animated in self.animated_objects:
                 animated.update()
 
@@ -550,6 +566,9 @@ class Game:
 
             for bonfire in self.bonfires:
                 self.render_order_objects.append((bonfire, bonfire.pos[1]))
+            
+            for chest in self.chests:
+                self.render_order_objects.append((chest, chest.pos[1]))
 
             for projectile in self.projectiles[:]:
                 if projectile.update():  # If the projectile should be removed
@@ -590,6 +609,8 @@ class Game:
                     obj.render(self.display, offset=render_scroll)
                 elif isinstance(obj, Bonfire):
                     obj.render(self.display, offset=render_scroll)
+                elif isinstance(obj, Chest):
+                    obj.render(self.display, offset=render_scroll)
                 elif isinstance(obj, Animated):
                     obj.render(self.display, offset=render_scroll)
                 elif isinstance(obj, Drop):
@@ -600,6 +621,10 @@ class Game:
             # Render Interact Key Floater
             for bonfire in self.player.nearby_bonfire_objects:
                 bonfire.render_interact(self.display, offset=render_scroll)
+
+             # Render Interact Key Floater
+            for chest in self.player.nearby_chest_objects:
+                chest.render_interact(self.display, offset=render_scroll)
             
             # update weather system
             self.weather_system.update()
@@ -674,7 +699,10 @@ class Game:
                         self.player.cast_spell()
                     # TODO bonfire interact
                     if event.key == pygame.K_f:
-                        self.player.rest_at_bonfire()
+                        if len(self.player.nearby_bonfire_objects)  >  0:
+                            self.player.rest_at_bonfire()
+                        if len(self.player.nearby_chest_objects) > 0:
+                            self.player.open_chest()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
                         self.movement_x[0] = False

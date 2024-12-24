@@ -181,6 +181,11 @@ class Player(PhysicsEntity):
         self.knockback_remaining = 0
         self.knockback_direction = None
 
+    def open_chest(self):
+        self.nearby_chest_objects[0].is_opened = True
+        # TODO Item stuff
+
+
     def rest_at_bonfire(self):
         if len(self.nearby_bonfires) > 0:
             self.spawn_point = [self.nearby_bonfire_objects[0].pos[0] + 8, self.nearby_bonfire_objects[0].pos[1] + 32]
@@ -222,6 +227,10 @@ class Player(PhysicsEntity):
         self.nearby_bonfires = []
         self.nearby_bonfire_objects = []
 
+        # Rest Nearby Chests
+        self.nearby_chests = []
+        self.nearby_chest_objects = []
+
         if self.knockback_remaining > 0:
             self.apply_knockback_movement()
         elif not self.is_melee_attacking:
@@ -232,6 +241,12 @@ class Player(PhysicsEntity):
         for bonfire in self.game.bonfires:
             if bonfire.pos in self.nearby_bonfires:
                 self.nearby_bonfire_objects.append(bonfire)   
+
+        # check for nearby chests
+        self.nearby_chests = self.game.tilemap.chests_around((self.pos[0] + self.physics_offset_x, self.pos[1] + self.physics_offset_y), self.physics_hitbox).copy()
+        for chest in self.game.chests:
+            if chest.pos in self.nearby_chests:
+                self.nearby_chest_objects.append(chest)        
 
         # Update melee attack duration
         if self.melee_hitbox is not None:

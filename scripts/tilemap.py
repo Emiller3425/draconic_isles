@@ -16,6 +16,9 @@ PHYSICS_TILE_TYPES = {
     'bonfire',
     'water',
     'lava',
+    'bronze_chest',
+    'silver_chest',
+    'gold_chest',
     }
 
 # Hitboxes for physics objects
@@ -51,7 +54,16 @@ PHYSICS_TILE_HITBOXES = {
     },
     'lava': {
         0: (14, 20),
-    }
+    },
+    'bronze_chest': {
+        0: (16, 16),
+    },
+    'silver_chest': {
+        0: (16, 16),
+    },
+    'gold_chest': {
+        0: (16, 16),
+    },
 }
 
 # If over a physics layer tile will negate the physcis
@@ -83,6 +95,9 @@ class Tilemap:
             # Animation Physics Objects
             # 'bush' : {'positions': [], 'variants': []},
             'tree' : {'positions': [], 'variants': []},
+            'bronze_chest' : {'positions': [], 'variants': []},
+            'silver_chest' : {'positions': [], 'variants': []},
+            'gold_chest' : {'positions': [], 'variants': []},
         }
 
         # Always rendered under the player, non y-sorted animated tiles
@@ -180,20 +195,20 @@ class Tilemap:
             top_left_pos = None
             for v in dict[k]:
                 if v != 'variants':
-                    for i in dict[k][v]:
-                        if top_left_pos == None:
-                            top_left_pos = i
-                        elif top_left_pos[1] > i[1]:
-                            top_left_pos = i
-                        elif top_left_pos[0] > i[0]:
-                            top_left_pos = i
-                    top_left_positions[k] = []
-                    top_left_positions[k].append(top_left_pos)
-                    top_left_index = dict[k][v].index(top_left_positions[k][0])
-                    top_left_variants[k] = []
-                    y = dict[k]['variants'][top_left_index]
-                    top_left_variants[k] = []
-                    top_left_variants[k].append(y)
+                        for i in dict[k][v]:
+                            if top_left_pos == None:
+                                top_left_pos = i
+                            elif top_left_pos[1] > i[1]:
+                                top_left_pos = i
+                            elif top_left_pos[0] > i[0]:
+                                top_left_pos = i
+                        top_left_positions[k] = []
+                        top_left_positions[k].append(top_left_pos)
+                        top_left_index = dict[k][v].index(top_left_positions[k][0])
+                        top_left_variants[k] = []
+                        y = dict[k]['variants'][top_left_index]
+                        top_left_variants[k] = []
+                        top_left_variants[k].append(y)
                                   
         return top_left_variants
 
@@ -360,6 +375,28 @@ class Tilemap:
                                 nearby_bonfires.append((x * self.tile_size,y * self.tile_size))
 
         return nearby_bonfires
+    
+    # TODO get nearby bonfires for when to show interact key for spawn saving
+    def chests_around(self, pos, player_size):
+        nearby_chests = []
+
+        # Calculate the number of tiles the entity covers
+        start_tile_x = int(pos[0] // self.tile_size) - 1
+        end_tile_x = int((pos[0] + player_size[0]) // self.tile_size) + 1
+        start_tile_y = int(pos[1] // self.tile_size) - 1
+        end_tile_y = int((pos[1] + player_size[1]) // self.tile_size) + 1
+
+        for x in range(start_tile_x, end_tile_x):
+            for y in range(start_tile_y, end_tile_y):
+                check_loc = f"{x};{y}"
+                if check_loc in self.tilemap:
+                    for tile in self.tilemap[check_loc]:
+                       # Check for bonfire object positions
+                        if tile['type'] == 'bronze_chest' or tile['type'] == 'silver_chest' or tile['type'] == 'gold_chest':
+                            if ((x,y)) in self.object_layers['bronze_chest']['positions'] or ((x,y)) in self.object_layers['silver_chest']['positions'] or ((x,y)) in self.object_layers['gold_chest']['positions']:
+                                nearby_chests.append((x * self.tile_size,y * self.tile_size))
+        
+        return nearby_chests
 
     def insert_entity_into_physics_tilemap(self, pos, entity_type):
         for i in range(0, len(self.physics_tilemap) - 1):
