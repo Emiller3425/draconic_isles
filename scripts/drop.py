@@ -12,7 +12,7 @@ class Drop:
         self.top_pos = (self.pos[0], self.pos[1] - 2)
         self.bottom_pos = (self.pos[0], self.pos[1] + 2)
         self.movement = 'up'
-        self.image = self.game.assets['drop']
+        self.image = self.game.assets['dropped_souls']
         self.tile_size = tile_size
         self.has_particle_spawner = False
         self.spawner = None

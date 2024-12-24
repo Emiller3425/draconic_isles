@@ -38,6 +38,7 @@ class Game:
         self.movement_y = [False, False]
 
         self.assets = {
+            # title screen assets
             'title_screen': load_image('screens/title_screen/0.png'),
             'title_screen/animation': Animation(load_images('screens/title_screen/animation'), img_dur = 7),
             'continue_button': load_image('screens/buttons/continue_button/0.png'),
@@ -45,71 +46,102 @@ class Game:
             'continue_button_greyed_out' : load_image('screens/buttons/continue_button/2.png'),
             'new_game_button': load_image('screens/buttons/new_game_button/0.png'),
             'new_game_button_hover': load_image('screens/buttons/new_game_button/1.png'),
+            # upgrade screen
             'upgrade_screen' : load_image('screens/upgrade_screen/0.png'),
+            # player
             'player': load_images('player/'),
+            # skeleton
             'skeleton': load_images('skeleton/'),
+            # wall types
             'walls': load_images('walls/'),
+            # ground types
             'ground': load_images('ground/'),
+            # lights
             'light': load_images('light/'),
+            # trees
             'tree': load_images('tree/'),
             'tree/animation' :  Animation(load_images('tree/animation'), img_dur=60),
+            # bridges
             'bridge': load_images('bridge'),
+            # bushes
             'bush': load_images('bush/'),
             'bush/animation' :  Animation(load_images('bush/animation'), img_dur=30),
+            # rocks
             'rock': load_images('rock/'),
+            # flowers
             'red_flower' : load_images('flowers/red_flower'),
             'red_flower/animation' :  Animation(load_images('flowers/red_flower/animation'), img_dur=30),
             'purple_flower' : load_images('flowers/purple_flower'),
             'purple_flower/animation' :  Animation(load_images('flowers/purple_flower/animation'), img_dur=30),
+            # player animations
             'player/idle_down': Animation(load_images('player/idle/idle_down'), img_dur=25),
             'player/idle_up': Animation(load_images('player/idle/idle_up'), img_dur=25),
             'player/idle_horizontal': Animation(load_images('player/idle/idle_horizontal'), img_dur=25),
             'player/walking_down': Animation(load_images('player/walking/walking_down'), img_dur=4),
             'player/walking_up': Animation(load_images('player/walking/walking_up'), img_dur=4),
             'player/walking_horizontal': Animation(load_images('player/walking/walking_horizontal'), img_dur=8),
+            # sekelton animations
             'skeleton/idle_down': Animation(load_images('skeleton/idle/idle_down'), img_dur=25),
             'skeleton/idle_up': Animation(load_images('skeleton/idle/idle_up'), img_dur=25),
             'skeleton/idle_horizontal': Animation(load_images('skeleton/idle/idle_horizontal'), img_dur=25),
             'skeleton/walking_down': Animation(load_images('skeleton/walking/walking_down'), img_dur=4),
             'skeleton/walking_up': Animation(load_images('skeleton/walking/walking_up'), img_dur=4),
             'skeleton/walking_horizontal': Animation(load_images('skeleton/walking/walking_horizontal'), img_dur=8),
+            # UI
             'player_attribute_bar': load_image('ui/player_attribute_bar.png'),
             'minor_enemy_health_bar': load_image('ui/minor_enemy_health_bar.png'),
             'equipped_melee_card' : load_image('ui/equipped_melee_card.png'),
             'equipped_spell_card' : load_image('ui/equipped_spell_card.png'),
             'soul_counter_card' : load_image('ui/soul_counter_card.png'),
+            # basic sword
             'basic_sword' : load_image('weapons/swords/basic_sword/basic_sword.png'),
             'basic_sword_vertical' : load_image('weapons/swords/basic_sword/basic_sword_vertical.png'),
             'basic_sword_horizontal' : load_image('weapons/swords/basic_sword/basic_sword_horizontal.png'),
+            # fireball
             'fireball' : load_image('spells/damage/fireball/fireball.png'),
             'fireballspell_horizontal' : Animation(load_images('spells/damage/fireball/traveling_horizontal'), img_dur=8),
             'fireballspell_vertical' : Animation(load_images('spells/damage/fireball/traveling_vertical'), img_dur=8),
             'fireballspell_impact' : Animation(load_images('spells/damage/fireball/impact'), img_dur=2),
+            # particles
             'particles/lamp_particle': Animation(load_images('particles/lamp_particle/'), img_dur=10, loop=False),
             'particles/smoke_particle': Animation(load_images('particles/smoke_particle/'), img_dur=40, loop=False),
             'particles/soul_particle' : Animation(load_images('particles/soul_particle/'), img_dur=40, loop=False),
+            #bonfire
             'bonfire': load_images('bonfire/'),
             'bonfire/animation': Animation(load_images('bonfire/animation'), img_dur=8),
+            # water
             'water': load_images('water/'),
             'water/animation' : Animation(load_images('water/animation'), img_dur=10),
+            # lava
             'lava': load_images('lava/'),
             'lava/animation' : Animation(load_images('lava/animation'), img_dur=20),
+            # keys
             'f_key': load_image('keys/f_key/0.png'),
+            # digits
             'grey_digits' : load_images('digits/grey_digits'),
             'red_digits' : load_images('digits/red_digits'),
             'green_digits' : load_images('digits/green_digits'),
             'blue_digits' : load_images('digits/blue_digits'),
-            'drop' : load_image('drops/souls/0.png'),
+            # dropped souls
+            'dropped_souls' : load_image('drops/souls/0.png'),
+            # upgrade arrows
             'upgrade_arrow' : load_image('ui/arrows/upgrade_arrow/upgrade_arrow.png'),
             'upgrade_arrow_hover' : load_image('ui/arrows/upgrade_arrow/upgrade_arrow_hover.png'),
+            'upgrade_arrow_greyed_out' : load_image('ui/arrows/upgrade_arrow/upgrade_arrow_greyed_out.png'),
+            # downgrade arrows
             'downgrade_arrow' : load_image('ui/arrows/downgrade_arrow/downgrade_arrow.png'),
             'downgrade_arrow_hover' : load_image('ui/arrows/downgrade_arrow/downgrade_arrow_hover.png'),
-            'upgrade_arrow_greyed_out' : load_image('ui/arrows/upgrade_arrow/upgrade_arrow_greyed_out.png'),
             'downgrade_arrow_greyed_out' : load_image('ui/arrows/downgrade_arrow/downgrade_arrow_greyed_out.png'),
+            # confirm button
             'confirm_button' : load_image('screens/buttons/confirm_button/confirm_button.png'),
             'confirm_button_hover' : load_image('screens/buttons/confirm_button/confirm_button_hover.png'),
             'confirm_button_greyed_out' : load_image('screens/buttons/confirm_button/confirm_button_greyed_out.png'),
-            'next_level' : load_image('ui/next_level.png')
+            # next level ui piece
+            'next_level' : load_image('ui/next_level.png'),
+            # chests
+            'bronze_chest' : load_image('chests/bronze_chest/0.png'),
+            'silver_chest' : load_image('chests/silver_chest/0.png'),
+            'gold_chest' : load_image('chests/gold_chest/0.png')
         }
         self.audio = {
             # TODO audio lol retard
