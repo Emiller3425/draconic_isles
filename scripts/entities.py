@@ -46,30 +46,56 @@ class PhysicsEntity:
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
         self.collisions = {'up': False, 'down': False, 'left': False, 'right': False}
 
+
+        # Normalize diagonal movement
+
+        # Up/left
+        if movement_x[0] and movement_y[0]:
+            movement_x[0], movement_y[0] = 0.7, 0.7
+        # Up/Right
+        if movement_x[1] and movement_y[0]:
+            movement_x[1], movement_y[0] = 0.7, 0.7
+        # Down/Left
+        if movement_x[0] and movement_y[1]:
+            movement_x[0], movement_y[1] = 0.7, 0.7
+        # Down/Right
+        if movement_x[1] and movement_y[1]:
+            movement_x[1], movement_y[1] = 0.7, 0.7
+
+        # Because we detect movement changes on key down and key-up, we must set the movement back to 1 if the player is moving diagonally and a key is let go
+        if movement_x[0] == 0.7 and (not movement_y[0] and not movement_y[1]):
+            movement_x[0] = 1
+        if movement_x[1] == 0.7  and (not movement_y[0] and not movement_y[1]):
+            movement_x[1] = 1
+        if movement_y[0] == 0.7  and (not movement_x[0] and not movement_x[1]):
+            movement_y[0] = 1
+        if movement_y[1] == 0.7  and (not movement_x[0] and not movement_x[1]):
+            movement_y[1] = 1
+        
         # Process vertical movement first
-        if movement_y[0]:  # Moving up
+        if movement_y[0] > 0:  # Moving up
             self.pos[1] -= movement_y[0]
             self.handle_collisions('up')
             self.is_facing = 'up'
             self.flip = False
-            if movement_x[0] != 1 and movement_x[1] != 1:
+            if movement_x[0] == 0 and movement_x[1] == 0:
                 self.set_action('walking_up')
-        if movement_y[1]:  # Moving down
+        if movement_y[1] > 0:  # Moving down
             self.pos[1] += movement_y[1]
             self.handle_collisions('down')
             self.is_facing = 'down'
             self.flip = False
-            if movement_x[0] != 1 and movement_x[1] != 1:
+            if movement_x[0] == 0 and movement_x[1] == 0:
                 self.set_action('walking_down')
                 
         # Process horizontal movement second
-        if movement_x[0]:  # Moving left
+        if movement_x[0] > 0:  # Moving left
             self.pos[0] -= movement_x[0]
             self.handle_collisions('left')
             self.is_facing = 'left'
             self.flip = True
             self.set_action('walking_horizontal')
-        if movement_x[1]:  # Moving right
+        if movement_x[1] > 0:  # Moving right
             self.pos[0] += movement_x[1]
             self.handle_collisions('right')
             self.is_facing = 'right'
