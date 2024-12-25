@@ -179,7 +179,7 @@ class Game:
                 if k == 'skeleton':
                     self.enemies.append(Enemy(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), (14, 16), (14, 6)))
             
-
+    # TODO fade out affect
     def fade_out(self):
         self.show_upgrade_screen = True
         pass
@@ -500,8 +500,17 @@ class Game:
             self.player.equipped_spell = data['equipped_spell']
             self.player.spawn_point = data['spawn_point']
             self.player.pos = self.player.spawn_point.copy()
+            # Update Map Data based on JSON
+            ## load opened chests
+            for chest in self.chests:
+                if list(chest.pos) in data['open_chests'][self.tilemap.current_level]:
+                    chest.is_opened = True
+                    
+                
+                
         elif os.path.isfile('save_files/save.json'):
              os.remove('save_files/save.json')
+
 
         self.ui = UI(self, self.player, self.player.equipped_melee, self.player.equipped_spell)
 

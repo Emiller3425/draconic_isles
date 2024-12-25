@@ -118,10 +118,12 @@ class Tilemap:
         self.enemy_positions = []
         self.boss_positions = []
         self.trees = []
+        self.current_level = None
 
     def load(self):
         # Load the map tilemap
         self.tmx_data = pytmx.load_pygame('./levels/test_level_2/test_level_2.tmx')
+        self.current_level = 'test_level_2'
 
         # create dictionary with key = layer names and values an array on integers in the data
         for layer_index, layer in enumerate(self.tmx_data.visible_layers):

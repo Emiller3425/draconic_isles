@@ -200,6 +200,14 @@ class Player(PhysicsEntity):
             self.game.movement_y[0] = False
             self.game.movement_y[1] = False
             self.set_action('idle_down')
+            
+            # Save open chests
+            open_chests = {self.game.tilemap.current_level : []}
+            for chest in self.game.chests:
+                if chest.is_opened:
+                    open_chests[self.game.tilemap.current_level].append((chest.pos[0], chest.pos[1]))
+            
+            # print(open_chests)
 
             # Information to save into JSON file
             data = {
@@ -211,6 +219,7 @@ class Player(PhysicsEntity):
             'equipped_spell' : self.equipped_spell,
             'spawn_point' : self.spawn_point,
             'level' : self.level,
+            'open_chests' : open_chests,
             }
 
             with open('save_files/save.json', 'w') as save_file:

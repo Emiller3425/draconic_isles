@@ -12,7 +12,7 @@ class Drop:
         self.top_pos = (self.pos[0], self.pos[1] - 2)
         self.bottom_pos = (self.pos[0], self.pos[1] + 2)
         self.movement = 'up'
-        self.image = self.game.assets['dropped_souls']
+        self.image = None  # set to whatever the drop image is
         self.tile_size = tile_size
         self.has_particle_spawner = False
         self.spawner = None
@@ -45,6 +45,7 @@ class Drop:
 class Souls(Drop):
     def __init__(self, game, type, pos, souls):
         super().__init__(game, type, pos)
+        self.image = self.game.assets['dropped_souls']
         self.souls = souls
 
     def update(self):

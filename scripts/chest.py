@@ -14,12 +14,20 @@ class Chest:
         self.anim_offset = (0, 0)
         self.flip = False
         self.is_opened = False
+        self.actual_drops = []
         if type == 0:
             self.animation = self.game.assets['bronze_chest_animation'].copy()
         elif type == 1:
             self.animation = self.game.assets['silver_chest_animation'].copy()
         else:
             self.animation = self.game.assets['gold_chest_animation'].copy()
+
+        self.potential_drops = {
+            
+        }
+
+    def select_drops(self):
+        pass
 
     def update(self):
         self.animation.update()
