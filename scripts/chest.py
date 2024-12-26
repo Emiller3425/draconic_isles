@@ -26,17 +26,16 @@ class Chest:
 
         # holds data of all potential drops in the game, TODO may need to add image field to hold the image of the item whend ropped
         self.potential_drops = {
-            {'weapons' : {
+            'weapons' : {
                 'basic_sword' : {'damage' : 10, 'cooldown' : 30, 'stamina_cost' : 10,}
-            }},
-            {'spells' : {
+            },
+            'spells' : {
                 'fireball' : {'damage' : 20, 'mana_cost' : 10, 'velocity': 2, 'restoration' : 0},
                 'lightning' : {'damage' : 30, 'mana_cost' : 25, 'velocity': 40, 'restoration' : 0},
-            }}
+            }
         }
 
     def drop_items(self):
-        print('drop')
         self.game.drops.append(Souls(self.game, 'soul', (self.pos[0], self.pos[1] + 8), 1000))
 
     def select_drops(self):
