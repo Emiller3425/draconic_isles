@@ -105,9 +105,12 @@ class Game:
             'basic_sword_drop' : load_image('weapons/swords/basic_sword/basic_sword_drop.png'),
             # fireball
             'fireball' : load_image('spells/damage/fireball/fireball.png'),
+            'fireball_drop' : load_image('spells/damage/fireball/fireball_drop.png'),
             'fireballspell_horizontal' : Animation(load_images('spells/damage/fireball/traveling_horizontal'), img_dur=8),
             'fireballspell_vertical' : Animation(load_images('spells/damage/fireball/traveling_vertical'), img_dur=8),
             'fireballspell_impact' : Animation(load_images('spells/damage/fireball/impact'), img_dur=2),
+            # lightning
+            'lightning_drop' : load_image('spells/damage/lightning/lightning_drop.png'),
             # particles
             'particles/torch_particle': Animation(load_images('particles/torch_particle/'), img_dur=10, loop=False),
             'particles/smoke_particle': Animation(load_images('particles/smoke_particle/'), img_dur=40, loop=False),

@@ -35,12 +35,25 @@ class Chest:
             }
         }
 
+        self.select_drops()
+
     def drop_items(self):
-        self.game.drops.append(Drop(self.game, (self.pos[0], self.pos[1] + 8), self.game.assets['basic_sword_drop']))
+        for drop in self.drops:
+            self.game.drops.append(Drop(self.game, (self.pos[0], self.pos[1] + 8), self.game.assets[drop + '_drop']))
 
     def select_drops(self):
-        pass
-
+        # random weapon
+        if random.random() > 0.5:
+            weapons = self.potential_drops['weapons']
+            random_weapon = random.choice(list(weapons.keys()))
+            self.drops.append(random_weapon)
+    
+        # random drop
+        else:
+            spells = self.potential_drops['spells']
+            random_spell = random.choice(list(spells.keys()))
+            self.drops.append(random_spell)
+        
     def update(self):
         self.animation.update()
 
