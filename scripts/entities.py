@@ -209,8 +209,10 @@ class Player(PhysicsEntity):
         self.knockback_direction = None
 
     def open_chest(self):
-        self.nearby_chest_objects[0].is_opened = True
+        chest = self.nearby_chest_objects[0]
+        chest.is_opened = True
         # TODO Item stuff
+        chest.drop_items()
 
 
     def rest_at_bonfire(self):
@@ -232,8 +234,6 @@ class Player(PhysicsEntity):
             for chest in self.game.chests:
                 if chest.is_opened:
                     open_chests[self.game.tilemap.current_level].append((chest.pos[0], chest.pos[1]))
-            
-            # print(open_chests)
 
             # Information to save into JSON file
             data = {

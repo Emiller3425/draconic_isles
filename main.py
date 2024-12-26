@@ -603,7 +603,7 @@ class Game:
                 self.render_order_objects.append((animated, animated.pos[1]))
 
             for drop in self.drops:
-                self.render_order_objects.append((drop, drop.original_pos[1] - 17))
+                self.render_order_objects.append((drop, drop.original_pos[1] - 15)) # had - 17 here, because if it's behind a large objeect it can get screwed up
 
             # Sort all render objects by their y-coordinate (top-down order)
             self.render_order_objects.sort(key=lambda obj: obj[1])
