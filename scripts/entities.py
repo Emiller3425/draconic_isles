@@ -319,7 +319,7 @@ class Player(PhysicsEntity):
         self.game.drops.clear()
         self.game.drop_particle_spawners.clear()
         if self.souls > 0:
-            self.game.drops.append(Souls(self.game, 'soul', self.pos.copy(), self.souls))
+            self.game.drops.append(Souls(self.game, self.pos.copy(), self.game.assets['dropped_souls'], self.souls))
             self.souls = 0
         self.pos = self.spawn_point.copy()
         self.health = self.max_health

@@ -36,7 +36,7 @@ class Chest:
         }
 
     def drop_items(self):
-        self.game.drops.append(Souls(self.game, 'soul', (self.pos[0], self.pos[1] + 8), 1000))
+        self.game.drops.append(Drop(self.game, (self.pos[0], self.pos[1] + 8), self.game.assets['basic_sword_drop']))
 
     def select_drops(self):
         pass

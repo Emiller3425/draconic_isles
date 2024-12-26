@@ -18,6 +18,7 @@ from scripts.weather import Weather
 from scripts.bonfire import Bonfire
 from scripts.animated import Animated
 from scripts.drop import Drop
+from scripts.drop import Souls
 from scripts.chest import Chest
 
 
@@ -101,13 +102,14 @@ class Game:
             'basic_sword' : load_image('weapons/swords/basic_sword/basic_sword.png'),
             'basic_sword_vertical' : load_image('weapons/swords/basic_sword/basic_sword_vertical.png'),
             'basic_sword_horizontal' : load_image('weapons/swords/basic_sword/basic_sword_horizontal.png'),
+            'basic_sword_drop' : load_image('weapons/swords/basic_sword/basic_sword_drop.png'),
             # fireball
             'fireball' : load_image('spells/damage/fireball/fireball.png'),
             'fireballspell_horizontal' : Animation(load_images('spells/damage/fireball/traveling_horizontal'), img_dur=8),
             'fireballspell_vertical' : Animation(load_images('spells/damage/fireball/traveling_vertical'), img_dur=8),
             'fireballspell_impact' : Animation(load_images('spells/damage/fireball/impact'), img_dur=2),
             # particles
-            'particles/lamp_particle': Animation(load_images('particles/lamp_particle/'), img_dur=10, loop=False),
+            'particles/torch_particle': Animation(load_images('particles/torch_particle/'), img_dur=10, loop=False),
             'particles/smoke_particle': Animation(load_images('particles/smoke_particle/'), img_dur=40, loop=False),
             'particles/soul_particle' : Animation(load_images('particles/soul_particle/'), img_dur=40, loop=False),
             #bonfire
@@ -442,8 +444,6 @@ class Game:
         self.animated_objects = []
         # lights
         self.lights = []
-        # lamp particle spawners
-        self.lamp_particle_spawners = []
         # torch particle spawners
         self.torch_particle_spawners = []
         # smoke particle spawners
@@ -518,7 +518,6 @@ class Game:
         for light in self.tilemap.extract([('light', 0), ('torch', 0)], keep=True):
             if light['type']== 'light':
                 self.lights.append(Light(self, light['pos'], 20, [20, 20, 0]))
-                self.lamp_particle_spawners.append(pygame.rect.Rect(light['pos'][0], light['pos'][1], 16, 16))
             elif light['type'] == 'torch':
                 self.lights.append(Light(self, light['pos'], 20, [40, 20, 0]))
                 self.torch_particle_spawners.append(pygame.rect.Rect(light['pos'][0], light['pos'][1], 16, 16))
@@ -554,9 +553,10 @@ class Game:
 
             for drop in self.drops:
                 drop.update()
-                if drop.has_particle_spawner == False:
+                # Add particle spawner if it's souls
+                if drop.has_particle_spawner == False and drop.__class__ == Souls:
                     drop.spawner = pygame.rect.Rect(drop.pos[0] - 4, drop.pos[1] - 8, 8, 8)
-                    self.drop_particle_spawners.append(drop.spawner)
+                    self.drop_particle_spawners.append((drop.spawner, drop.__class__))
                     drop.has_particle_spawner = True
             
             
@@ -663,34 +663,31 @@ class Game:
             for light in self.lights:
                 light.render(self.night_overlay, offset=render_scroll)
             
-            # TODO - Add particle behavior
-            for rect in self.lamp_particle_spawners:
-                if random.random() < 0.002:
-                    pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
-                    self.particles.append(Particle(self, 'lamp_particle', pos, velocity=[-0.15, 0.3], frame=random.randint(0, 10)))
-            
+            # Torch Ember Particles
             for rect in self.torch_particle_spawners:
                 if random.random() < 0.5:
                     pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
-                    self.particles.append(Particle(self, 'lamp_particle', pos, velocity=[random.uniform(-0.15, 0.15), random.uniform(-0.3, 0.3)], frame=random.randint(0, 10)))
+                    self.particles.append(Particle(self, 'torch_particle', pos, velocity=[random.uniform(-0.15, 0.15), random.uniform(-0.3, 0.3)], frame=random.randint(0, 10)))
 
+            # Bonfire Smoke Particles
             for rect in self.smoke_particle_spawners:
                 if random.random() < 0.5:
                     pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
                     self.particles.append(Particle(self, 'smoke_particle', pos, velocity=[0, -0.2], frame=random.randint(0, 10)))
             
-            for rect in self.drop_particle_spawners:
-                if random.random() < 0.25:
+            # Drop Particles
+            for rect, drop_type in self.drop_particle_spawners:
+                # Soul Drop Particles
+                print(rect)
+                if random.random() < 0.25 and drop_type == Souls:
                     pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
                     self.particles.append(Particle(self, 'soul_particle', pos, velocity=[0, -0.2], frame=random.randint(0, 10)))
-
-
 
             # animate and render particles
             for particle in self.particles.copy():
                 kill = particle.update()
                 particle.render(self.display, offset=render_scroll)
-                if isinstance(particle, Particle) and particle.type == 'lamp_particle':
+                if isinstance(particle, Particle) and particle.type == 'torch_particle':
                     particle.pos[0] += math.sin(random.random()) * 0.3
                     particle.pos[1] += math.sin(random.random()) * 0.3
                 elif isinstance(particle, Particle) and particle.type == 'smoke_particle':
