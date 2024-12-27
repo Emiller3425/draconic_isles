@@ -361,7 +361,6 @@ class Tilemap:
         return rects
     
 
-    # TODO get nearby bonfires for when to show interact key for spawn saving
     def bonfires_around(self, pos, player_size):
         nearby_bonfires = []
 
@@ -383,7 +382,6 @@ class Tilemap:
 
         return nearby_bonfires
     
-    # TODO get nearby bonfires for when to show interact key for spawn saving
     def chests_around(self, pos, player_size):
         nearby_chests = []
 

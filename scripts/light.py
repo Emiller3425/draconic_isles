@@ -1,7 +1,6 @@
 import pygame
 import json
 
-# TODO Add size input parameter
 class Light:
     def __init__(self, game, pos, size, color):
         self.game = game

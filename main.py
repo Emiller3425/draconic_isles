@@ -50,6 +50,8 @@ class Game:
             'new_game_button_hover': load_image('screens/buttons/new_game_button/1.png'),
             # upgrade screen
             'upgrade_screen' : load_image('screens/upgrade_screen/0.png'),
+            # inventory screen
+            'inventory_screen' : load_image('screens/inventory_screen/0.png'),
             # player
             'player': load_images('player/'),
             # skeleton
@@ -176,7 +178,6 @@ class Game:
                 self.main()
 
     # Handles all logic in the start screen when the game is initially booted up
-    # TODO Any enemies that dies need to be readded to this array
     def reset_enemies(self):
         self.enemies.clear()
         for k in self.tilemap.object_layers:
@@ -323,7 +324,6 @@ class Game:
                         self.player.max_mana -= 10
                         self.player.level -= 1
                         mana_levels_applied -= 1
-                    pass
 
                     # confirm level-up handling
                     if confirm_button_rect.collidepoint(event.pos) and (health_levels_applied > 0 or stamina_levels_applied > 0 or mana_levels_applied > 0):
@@ -336,6 +336,10 @@ class Game:
                         stamina_levels_applied = 0
                         mana_levels_applied = 0
 
+                        # For data we need to keep the same
+                        with open('save_files/save.json') as save_file:
+                            temp_data = json.load(save_file)
+
                         data = {
                         'max_health' : self.player.max_health,
                         'max_stamina' : self.player.max_stamina,
@@ -344,7 +348,8 @@ class Game:
                         'equipped_melee' : self.player.equipped_melee,
                         'equipped_spell' : self.player.equipped_spell,
                         'spawn_point' : self.player.spawn_point,
-                        'level' : self.player.level
+                        'level' : self.player.level,
+                        'open_chests' : temp_data['open_chests'],
                         }
 
                         with open('save_files/save.json', 'w') as save_file:
@@ -365,6 +370,18 @@ class Game:
             pygame.display.update()
             self.clock.tick(60)
 
+    def inventory_screen(self):
+        while True:
+            self.screen.blit(pygame.transform.scale(self.assets['inventory_screen'], (self.screen.get_width() - 200, self.screen.get_height() - 200)), (100,100))
+            self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_melee.weapon_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,150))
+            self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,360))
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        return
+                    
+            pygame.display.update()
+            self.clock.tick(60)
 
     def start_screen(self):
         self.screen.fill((0, 0, 0))
@@ -381,7 +398,6 @@ class Game:
 
         pygame.display.update()
 
-        # TODO Fix handling for continue and new game when we get to end state
         while True:
             self.screen.blit(pygame.transform.scale(self.animation.img(), self.screen.get_size()), (0,0))
             cursor_pos = pygame.mouse.get_pos()
@@ -515,7 +531,7 @@ class Game:
              os.remove('save_files/save.json')
 
 
-        self.ui = UI(self, self.player, self.player.equipped_melee, self.player.equipped_spell)
+        self.ui = UI(self, self.player, self.player.equipped_melee.weapon_type, self.player.equipped_spell)
 
         # Get all light objects
         for light in self.tilemap.extract([('light', 0), ('torch', 0)], keep=True):
@@ -725,12 +741,13 @@ class Game:
                         self.player.melee()
                     if event.key == pygame.K_e: 
                         self.player.cast_spell()
-                    # TODO bonfire interact
                     if event.key == pygame.K_f:
                         if len(self.player.nearby_bonfire_objects)  >  0:
                             self.player.rest_at_bonfire()
                         if len(self.player.nearby_chest_objects) > 0:
                             self.player.open_chest()
+                    if event.key == pygame.K_i:
+                        self.inventory_screen()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
                         self.movement_x[0] = False

@@ -8,6 +8,7 @@ from collections import deque
 
 from scripts.drop import Drop, Souls
 from scripts.tilemap import Tilemap
+from scripts.weapon import Weapon
 from scripts.projectile import Projectile, FireballSpell
 
 
@@ -175,9 +176,9 @@ class Player(PhysicsEntity):
         self.level = 1
         self.melee_hitbox = None
         self.image = self.game.assets['player']
-        self.equipped_melee = 'basic_sword'
+        self.equipped_melee = Weapon(self.game, 'basic_sword', 10, 30, 10)
+        # TODO might need a spell class to handle data for these + inventory UI stuff
         self.equipped_spell = 'fireball'
-        self.spell_velocity = [0, 0]
         self.is_facing = 'down'
         self.vertical_spell = False
         self.vertical_spell_flip = False
@@ -448,11 +449,11 @@ class Player(PhysicsEntity):
         if self.melee_hitbox is not None:
             # Select weapon image based on facing direction
             if self.is_facing in ['up', 'down']:
-                weapon_image = self.game.assets[self.equipped_melee + '_vertical']
+                weapon_image = self.game.assets[self.equipped_melee.weapon_type + '_vertical']
                 flip_horizontally = False
                 flip_vertically = self.is_facing == 'down'  # Flip vertically if facing down
             else:
-                weapon_image = self.game.assets[self.equipped_melee + '_horizontal']
+                weapon_image = self.game.assets[self.equipped_melee.weapon_type + '_horizontal']
                 flip_horizontally = self.is_facing == 'left'  # Flip horizontally if facing left
                 flip_vertically = False
 

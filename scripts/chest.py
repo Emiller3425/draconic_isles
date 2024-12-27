@@ -7,8 +7,6 @@ from scripts.light import Light
 from scripts.drop import Drop
 from scripts.drop import Souls
 
-
-# TODO enable chests to drop items
 class Chest:
     def __init__(self, game, pos, type):
         self.game = game

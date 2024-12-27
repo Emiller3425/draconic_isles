@@ -16,7 +16,7 @@ class Weather:
         self.day_duration = day_duration
         self.night_duration = night_duration
         self.time = 0
-        self.is_day = False  
+        self.is_day = True
         self.transitioning = False
         self.transition_time = 0
         self.transition_duration = 5000  # 10 seconds transition (assuming 60 FPS)
