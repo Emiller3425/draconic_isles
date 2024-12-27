@@ -176,7 +176,6 @@ class Player(PhysicsEntity):
         self.level = 1
         self.melee_hitbox = None
         self.image = self.game.assets['player']
-        self.equipped_melee = Weapon(self.game, 'basic_sword', 10, 30, 10)
         # TODO might need a spell class to handle data for these + inventory UI stuff
         self.equipped_spell = 'fireball'
         self.is_facing = 'down'
@@ -186,10 +185,12 @@ class Player(PhysicsEntity):
         self.is_melee_attacking = False
         self.nearby_bonfires = []
         self.nearby_bonfire_objects = []
-        self.inventory = []
+        self.weapon_inventory = [Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10)]
+        self.equipped_melee = self.weapon_inventory[0]
+        self.spell_inventory = []
 
         self.attack_cooldowns = {
-            'melee': {'current': 0, 'max': 30},
+            'melee': {'current': 0, 'max': self.equipped_melee.cooldown},
         }
 
         self.spell_details = {
@@ -242,7 +243,7 @@ class Player(PhysicsEntity):
             'max_stamina' : self.max_stamina,
             'max_mana' : self.max_mana,
             'souls' : self.souls,
-            'equipped_melee' : self.equipped_melee,
+            'equipped_melee' : self.equipped_melee.weapon_type,
             'equipped_spell' : self.equipped_spell,
             'spawn_point' : self.spawn_point,
             'level' : self.level,
@@ -320,7 +321,7 @@ class Player(PhysicsEntity):
         self.game.drops.clear()
         self.game.drop_particle_spawners.clear()
         if self.souls > 0:
-            self.game.drops.append(Souls(self.game, self.pos.copy(), self.game.assets['dropped_souls'], self.souls))
+            self.game.drops.append(Souls(self.game, self.pos.copy(), 'souls'. self.game.assets['dropped_souls'], self.souls))
             self.souls = 0
         self.pos = self.spawn_point.copy()
         self.health = self.max_health
@@ -378,10 +379,10 @@ class Player(PhysicsEntity):
 
 
     def melee(self):
-        if self.attack_cooldowns['melee']['current'] == 0 and self.stamina >= 15:
+        if self.attack_cooldowns['melee']['current'] == 0 and self.stamina >= self.equipped_melee.stamina_cost:
             super().melee()
 
-            self.stamina -= 15
+            self.stamina -= self.equipped_melee.stamina_cost
             self.stamina_recovery_start = pygame.time.get_ticks()
 
             # Set the melee attack duration to 10 frames
@@ -390,7 +391,7 @@ class Player(PhysicsEntity):
 
             for enemy in self.game.enemies:
                 if self.melee_hitbox and self.melee_hitbox.colliderect(enemy.damage_rect()):
-                    enemy.health -= 10
+                    enemy.health -= self.equipped_melee.damage
                     knockback_vector = [enemy.pos[0] - self.pos[0], enemy.pos[1] - self.pos[1]]
                     enemy.apply_knockback(knockback_vector, knockback_strength=3)
 

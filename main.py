@@ -373,8 +373,39 @@ class Game:
     def inventory_screen(self):
         while True:
             self.screen.blit(pygame.transform.scale(self.assets['inventory_screen'], (self.screen.get_width() - 200, self.screen.get_height() - 200)), (100,100))
+            # Render Equipped Items
             self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_melee.weapon_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,150))
             self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,360))
+            # Render Inventory
+
+            # Weapons
+            inventory_render_x_offset = 0
+            inventory_render_y_offset = 0
+            non_equipped_weapons_count = 0
+            for weapon in enumerate(self.player.weapon_inventory):
+                if non_equipped_weapons_count == 4:
+                    inventory_render_y_offset = 70
+                    inventory_render_x_offset = 0
+                if weapon[1] is not self.player.equipped_melee:
+                    self.screen.blit(self.assets[weapon[1].weapon_type], (280 + inventory_render_x_offset, 150 + inventory_render_y_offset))
+                    inventory_render_x_offset += 55
+                    non_equipped_weapons_count += 1
+
+
+            # Spells
+            inventory_render_x_offset = 0
+            inventory_render_y_offset = 0
+            non_equipped_spells_count = 0
+            for spell in enumerate(self.player.spell_inventory):
+                if non_equipped_spells_count == 4:
+                    inventory_render_y_offset = 70
+                    inventory_render_x_offset = 0
+                if spell[1] is not self.player.equipped_melee:
+                    self.screen.blit(self.assets[spell[1].weapon_type], (280 + inventory_render_x_offset, 150 + inventory_render_y_offset))
+                    inventory_render_x_offset += 55
+                    non_equipped_weapons_count += 1
+
+            # Events
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:

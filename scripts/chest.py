@@ -8,7 +8,7 @@ from scripts.drop import Drop
 from scripts.drop import Souls
 
 class Chest:
-    def __init__(self, game, pos, type):
+    def __init__(self, game, pos, type, item=None):
         self.game = game
         self.pos = pos
         self.anim_offset = (0, 0)
@@ -21,6 +21,8 @@ class Chest:
             self.animation = self.game.assets['silver_chest_animation'].copy()
         else:
             self.animation = self.game.assets['gold_chest_animation'].copy()
+
+        self.item = item
 
         # holds data of all potential drops in the game, TODO may need to add image field to hold the image of the item whend ropped
         self.potential_drops = {
@@ -37,21 +39,25 @@ class Chest:
 
     def drop_items(self):
         for drop in self.drops:
-            self.game.drops.append(Drop(self.game, (self.pos[0], self.pos[1] + 8), self.game.assets[list(drop)[0] + '_drop']))
+            self.game.drops.append(Drop(self.game, (self.pos[0], self.pos[1] + 8), drop, self.game.assets[drop + '_drop']))
 
     def select_drops(self):
-        # random weapon
-        if random.random() > 0.5:
-            weapons = self.potential_drops['weapons']
-            random_weapon = random.choice(list(weapons))
-            random_weapon_stats = self.potential_drops['weapons'][random_weapon]
-            self.drops.append({random_weapon : random_weapon_stats})
-    
-        # random drop
+        # If weapon/spell is specified
+        if self.item is not None:
+            self.drops.append(self.item)
+        # random 
         else:
-            spells = self.potential_drops['spells']
-            random_spell = random.choice(list(spells.keys()))
-            self.drops.append(random_spell)
+            # random weapon
+            if random.random() > 0.5:
+                weapons = self.potential_drops['weapons']
+                random_weapon = random.choice(list(weapons.keys()))
+                self.drops.append(random_weapon)
+        
+            # random drop
+            else:
+                spells = self.potential_drops['spells']
+                random_spell = random.choice(list(spells.keys()))
+                self.drops.append(random_spell)
         
     def update(self):
         self.animation.update()
