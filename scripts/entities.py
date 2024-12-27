@@ -9,6 +9,7 @@ from collections import deque
 from scripts.drop import Drop, Souls
 from scripts.tilemap import Tilemap
 from scripts.weapon import Weapon
+from scripts.spell import Spell
 from scripts.projectile import Projectile, FireballSpell
 
 
@@ -176,8 +177,6 @@ class Player(PhysicsEntity):
         self.level = 1
         self.melee_hitbox = None
         self.image = self.game.assets['player']
-        # TODO might need a spell class to handle data for these + inventory UI stuff
-        self.equipped_spell = 'fireball'
         self.is_facing = 'down'
         self.vertical_spell = False
         self.vertical_spell_flip = False
@@ -187,15 +186,8 @@ class Player(PhysicsEntity):
         self.nearby_bonfire_objects = []
         self.weapon_inventory = [Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10)]
         self.equipped_melee = self.weapon_inventory[0]
-        self.spell_inventory = []
-
-        self.attack_cooldowns = {
-            'melee': {'current': 0, 'max': self.equipped_melee.cooldown},
-        }
-
-        self.spell_details = {
-            'fireball': {'mana_cost': 10, 'velocity': 2},
-        }
+        self.spell_inventory = [Spell(self.game, 'fireball', 20, 10, 2, 0), Spell(self.game, 'fireball', 20, 10, 2, 0), Spell(self.game, 'fireball', 20, 10, 2, 0), Spell(self.game, 'fireball', 20, 10, 2, 0), Spell(self.game, 'fireball', 20, 10, 2, 0), Spell(self.game, 'fireball', 20, 10, 2, 0)]
+        self.equipped_spell = self.spell_inventory[0]
 
         self.stamina_recovery_start = None
         self.stamina_regen_cooldown = 2000
@@ -204,6 +196,8 @@ class Player(PhysicsEntity):
         self.mana_recovery_start = None
         self.mana_regen_cooldown = 2000
         self.mana_regen_rate = 0.02
+
+        self.attack_cooldown = 0
 
         self.knockback_velocity = [0, 0]
         self.knockback_duration = 10
@@ -244,7 +238,7 @@ class Player(PhysicsEntity):
             'max_mana' : self.max_mana,
             'souls' : self.souls,
             'equipped_melee' : self.equipped_melee.weapon_type,
-            'equipped_spell' : self.equipped_spell,
+            'equipped_spell' : self.equipped_spell.spell_type,
             'spawn_point' : self.spawn_point,
             'level' : self.level,
             'open_chests' : open_chests,
@@ -297,9 +291,8 @@ class Player(PhysicsEntity):
                 self.is_melee_attacking = False 
 
         # Handle stamina and mana recovery
-        for attack in self.attack_cooldowns:
-            if self.attack_cooldowns[attack]['current'] > 0:
-                self.attack_cooldowns[attack]['current'] -= 1
+        if self.attack_cooldown > 0:
+            self.attack_cooldown -= 1
 
         if self.stamina < self.max_stamina and self.stamina_recovery_start:
             time_since_last_melee = pygame.time.get_ticks() - self.stamina_recovery_start
@@ -379,7 +372,7 @@ class Player(PhysicsEntity):
 
 
     def melee(self):
-        if self.attack_cooldowns['melee']['current'] == 0 and self.stamina >= self.equipped_melee.stamina_cost:
+        if self.attack_cooldown == 0 and self.stamina >= self.equipped_melee.stamina_cost:
             super().melee()
 
             self.stamina -= self.equipped_melee.stamina_cost
@@ -395,31 +388,31 @@ class Player(PhysicsEntity):
                     knockback_vector = [enemy.pos[0] - self.pos[0], enemy.pos[1] - self.pos[1]]
                     enemy.apply_knockback(knockback_vector, knockback_strength=3)
 
-            self.attack_cooldowns['melee']['current'] = self.attack_cooldowns['melee']['max']
+            self.attack_cooldown = self.equipped_melee.cooldown
 
     def cast_spell(self):
-        if self.mana >= self.spell_details[self.equipped_spell]['mana_cost']:
+        if self.mana >= self.equipped_spell.mana_cost:
             if self.is_facing == 'up':
-                self.spell_velocity = [0, -self.spell_details[self.equipped_spell]['velocity']]
+                self.spell_velocity = [0, -self.equipped_spell.velocity]
                 self.vertical_spell = True
                 self.vertical_spell_flip = True
             if self.is_facing == 'down':
-                self.spell_velocity = [0, self.spell_details[self.equipped_spell]['velocity']]
+                self.spell_velocity = [0, self.equipped_spell.velocity]
                 self.vertical_spell = True
                 self.vertical_spell_flip = False
             if self.is_facing == 'left':
-                self.spell_velocity = [-self.spell_details[self.equipped_spell]['velocity'], 0]
+                self.spell_velocity = [-self.equipped_spell.velocity, 0]
                 self.vertical_spell = False
                 self.vertical_spell_flip = False
             if self.is_facing == 'right':
-                self.spell_velocity = [self.spell_details[self.equipped_spell]['velocity'], 0]
+                self.spell_velocity = [self.equipped_spell.velocity, 0]
                 self.vertical_spell = False
                 self.vertical_spell_flip = False
-            if self.equipped_spell == 'fireball':
-                fireball = FireballSpell(self.game, (self.pos[0] + 2, self.pos[1] + 2), self.spell_velocity, self.vertical_spell, self.vertical_spell_flip)
+            if self.equipped_spell.spell_type == 'fireball':
+                fireball = FireballSpell(self.game, (self.pos[0] + 2, self.pos[1] + 8), self.spell_velocity, self.vertical_spell, self.vertical_spell_flip)
                 self.game.projectiles.append(fireball)
 
-            self.mana -= self.spell_details[self.equipped_spell]['mana_cost']
+            self.mana -= self.equipped_spell.mana_cost
             self.mana_recovery_start = pygame.time.get_ticks()
 
         else:

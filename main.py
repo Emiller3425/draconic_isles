@@ -112,6 +112,7 @@ class Game:
             'fireballspell_vertical' : Animation(load_images('spells/damage/fireball/traveling_vertical'), img_dur=8),
             'fireballspell_impact' : Animation(load_images('spells/damage/fireball/impact'), img_dur=2),
             # lightning
+            'lightning' : load_image('spells/damage/lightning/lightning.png'),
             'lightning_drop' : load_image('spells/damage/lightning/lightning_drop.png'),
             # particles
             'particles/torch_particle': Animation(load_images('particles/torch_particle/'), img_dur=10, loop=False),
@@ -375,20 +376,20 @@ class Game:
             self.screen.blit(pygame.transform.scale(self.assets['inventory_screen'], (self.screen.get_width() - 200, self.screen.get_height() - 200)), (100,100))
             # Render Equipped Items
             self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_melee.weapon_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,150))
-            self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,360))
+            self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell.spell_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,360))
             # Render Inventory
 
             # Weapons
             inventory_render_x_offset = 0
             inventory_render_y_offset = 0
             non_equipped_weapons_count = 0
-            for weapon in enumerate(self.player.weapon_inventory):
+            for weapon in self.player.weapon_inventory:
                 if non_equipped_weapons_count == 4:
-                    inventory_render_y_offset = 70
+                    inventory_render_y_offset = 68
                     inventory_render_x_offset = 0
-                if weapon[1] is not self.player.equipped_melee:
-                    self.screen.blit(self.assets[weapon[1].weapon_type], (280 + inventory_render_x_offset, 150 + inventory_render_y_offset))
-                    inventory_render_x_offset += 55
+                if weapon is not self.player.equipped_melee:
+                    self.screen.blit(self.assets[weapon.weapon_type], (278 + inventory_render_x_offset, 150 + inventory_render_y_offset))
+                    inventory_render_x_offset += 54
                     non_equipped_weapons_count += 1
 
 
@@ -396,14 +397,14 @@ class Game:
             inventory_render_x_offset = 0
             inventory_render_y_offset = 0
             non_equipped_spells_count = 0
-            for spell in enumerate(self.player.spell_inventory):
+            for spell in self.player.spell_inventory:
                 if non_equipped_spells_count == 4:
-                    inventory_render_y_offset = 70
+                    inventory_render_y_offset = 68
                     inventory_render_x_offset = 0
-                if spell[1] is not self.player.equipped_melee:
-                    self.screen.blit(self.assets[spell[1].weapon_type], (280 + inventory_render_x_offset, 150 + inventory_render_y_offset))
-                    inventory_render_x_offset += 55
-                    non_equipped_weapons_count += 1
+                if spell is not self.player.equipped_melee:
+                    self.screen.blit(self.assets[spell.spell_type], (278 + inventory_render_x_offset, 360 + inventory_render_y_offset))
+                    inventory_render_x_offset += 54
+                    non_equipped_spells_count += 1
 
             # Events
             for event in pygame.event.get():
@@ -562,7 +563,7 @@ class Game:
              os.remove('save_files/save.json')
 
 
-        self.ui = UI(self, self.player, self.player.equipped_melee.weapon_type, self.player.equipped_spell)
+        self.ui = UI(self, self.player, self.player.equipped_melee.weapon_type, self.player.equipped_spell.spell_type)
 
         # Get all light objects
         for light in self.tilemap.extract([('light', 0), ('torch', 0)], keep=True):
