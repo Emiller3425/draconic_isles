@@ -2,7 +2,7 @@ import pygame
 import json
 
 class UI:
-    def __init__(self, game, player, equipped_player_melee, equipped_player_spell,
+    def __init__(self, game, player, equipped_player_weapon, equipped_player_spell,
                  base_position=(10, 0), base_size=(100, 50), 
                  player_attribute_bar_positions=None, player_attribute_bar_sizes=None):
         self.game = game
@@ -12,10 +12,10 @@ class UI:
         # Load the custom UI elements
         self.player_attribute_bar_image = game.assets['player_attribute_bar']
         self.minor_enemy_health_bar_image = game.assets['minor_enemy_health_bar']
-        self.equipped_melee_card = game.assets['equipped_melee_card']
+        self.equipped_weapon_card = game.assets['equipped_weapon_card']
         self.equipped_spell_card = game.assets['equipped_spell_card']
         self.soul_counter_card = game.assets['soul_counter_card']
-        self.equipped_player_melee = equipped_player_melee
+        self.equipped_player_melee = equipped_player_weapon
         self.equipped_player_spell = equipped_player_spell
         self.grey_digits = game.assets['grey_digits']
         self.red_digits = game.assets['red_digits']
@@ -136,11 +136,11 @@ class UI:
         _, screen_height = surf.get_size()
 
         # Determine the positions for the melee and spell cards
-        melee_card_position = (5, screen_height - self.equipped_melee_card.get_height() - 5)
-        spell_card_position = (melee_card_position[0] + self.equipped_melee_card.get_width() + 2, melee_card_position[1])
+        melee_card_position = (5, screen_height - self.equipped_weapon_card.get_height() - 5)
+        spell_card_position = (melee_card_position[0] + self.equipped_weapon_card.get_width() + 2, melee_card_position[1])
 
         # Render the equipped melee card background
-        surf.blit(self.equipped_melee_card, melee_card_position)
+        surf.blit(self.equipped_weapon_card, melee_card_position)
 
         # Render the equipped melee weapon on top of the melee card
         if self.equipped_player_melee:
@@ -148,8 +148,8 @@ class UI:
             if melee_image:
                 # Center the melee weapon image on the melee card
                 melee_image_position = (
-                    melee_card_position[0] + (self.equipped_melee_card.get_width() - melee_image.get_width()) // 2,
-                    melee_card_position[1] + (self.equipped_melee_card.get_height() - melee_image.get_height()) // 2
+                    melee_card_position[0] + (self.equipped_weapon_card.get_width() - melee_image.get_width()) // 2,
+                    melee_card_position[1] + (self.equipped_weapon_card.get_height() - melee_image.get_height()) // 2
                 )
                 surf.blit(melee_image, melee_image_position)
 

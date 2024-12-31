@@ -97,7 +97,7 @@ class Game:
             # UI
             'player_attribute_bar': load_image('ui/player_attribute_bar.png'),
             'minor_enemy_health_bar': load_image('ui/minor_enemy_health_bar.png'),
-            'equipped_melee_card' : load_image('ui/equipped_melee_card.png'),
+            'equipped_weapon_card' : load_image('ui/equipped_weapon_card.png'),
             'equipped_spell_card' : load_image('ui/equipped_spell_card.png'),
             'soul_counter_card' : load_image('ui/soul_counter_card.png'),
             # basic sword
@@ -346,8 +346,8 @@ class Game:
                         'max_stamina' : self.player.max_stamina,
                         'max_mana' : self.player.max_mana,
                         'souls' : self.player.souls,
-                        'equipped_melee' : self.player.equipped_melee,
-                        'equipped_spell' : self.player.equipped_spell,
+                        'equipped_weapon' : self.player.equipped_weapon.weapon_type,
+                        'equipped_spell' : self.player.equipped_spell.spell_type,
                         'spawn_point' : self.player.spawn_point,
                         'level' : self.player.level,
                         'open_chests' : temp_data['open_chests'],
@@ -372,11 +372,39 @@ class Game:
             self.clock.tick(60)
 
     def inventory_screen(self):
+        # Equipped Rects
+        equipped_weapon_rect = pygame.Rect(136, 144, 107, 112)
+        equipped_spell_rect = pygame.Rect(136, 352, 107, 112)
+
+        # Other Rects
+        inventory_render_x_offset = 0
+        inventory_render_y_offset = 0
+        non_equipped_weapons_count = 0
+        non_equipped_weapon_rects = []
+        non_equipped_spell_rects = []
+
+        cursor_pos = pygame.mouse.get_pos()
         while True:
             self.screen.blit(pygame.transform.scale(self.assets['inventory_screen'], (self.screen.get_width() - 200, self.screen.get_height() - 200)), (100,100))
+            cursor_pos = pygame.mouse.get_pos()
+
+            for non_equipped_weapon in non_equipped_weapon_rects:
+                if non_equipped_weapon.collidepoint(cursor_pos):
+                    pygame.draw.rect(self.screen, (188, 158, 130), non_equipped_weapon)
+
+            for non_equipped_spell in non_equipped_spell_rects:
+                if non_equipped_spell.collidepoint(cursor_pos):
+                    pygame.draw.rect(self.screen, (188, 158, 130), non_equipped_spell)
+
+            if equipped_weapon_rect.collidepoint(cursor_pos):
+                pygame.draw.rect(self.screen, (188, 158, 130), equipped_weapon_rect)
+            if equipped_spell_rect.collidepoint(cursor_pos):
+                pygame.draw.rect(self.screen, (188, 158, 130), equipped_spell_rect)
             # Render Equipped Items
-            self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_melee.weapon_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,150))
-            self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell.spell_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,360))
+            if self.player.equipped_weapon is not None:
+                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_weapon.weapon_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,150))
+            if self.player.equipped_spell is not None:
+                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell.spell_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,360))
             # Render Inventory
 
             # Weapons
@@ -387,8 +415,9 @@ class Game:
                 if non_equipped_weapons_count == 4:
                     inventory_render_y_offset = 68
                     inventory_render_x_offset = 0
-                if weapon is not self.player.equipped_melee:
+                if weapon is not self.player.equipped_weapon:
                     self.screen.blit(self.assets[weapon.weapon_type], (278 + inventory_render_x_offset, 150 + inventory_render_y_offset))
+                    non_equipped_weapon_rects.append(pygame.Rect(271 + inventory_render_x_offset, 144 + inventory_render_y_offset, 43, 46))
                     inventory_render_x_offset += 54
                     non_equipped_weapons_count += 1
 
@@ -401,15 +430,16 @@ class Game:
                 if non_equipped_spells_count == 4:
                     inventory_render_y_offset = 68
                     inventory_render_x_offset = 0
-                if spell is not self.player.equipped_melee:
+                if spell is not self.player.equipped_spell:
                     self.screen.blit(self.assets[spell.spell_type], (278 + inventory_render_x_offset, 360 + inventory_render_y_offset))
+                    non_equipped_spell_rects.append(pygame.Rect(271 + inventory_render_x_offset, 352 + inventory_render_y_offset, 43, 46))
                     inventory_render_x_offset += 54
                     non_equipped_spells_count += 1
 
             # Events
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
+                    if event.key == pygame.K_ESCAPE or event.key == pygame.K_i:
                         return
                     
             pygame.display.update()
@@ -547,7 +577,7 @@ class Game:
             self.player.max_mana = data['max_mana']
             self.player.souls = data['souls']
             self.player.level = data['level']
-            self.player.equipped_melee = data['equipped_melee']
+            self.player.equipped_weapon = data['equipped_weapon']
             self.player.equipped_spell = data['equipped_spell']
             self.player.spawn_point = data['spawn_point']
             self.player.pos = self.player.spawn_point.copy()
@@ -563,7 +593,7 @@ class Game:
              os.remove('save_files/save.json')
 
 
-        self.ui = UI(self, self.player, self.player.equipped_melee.weapon_type, self.player.equipped_spell.spell_type)
+        self.ui = UI(self, self.player, self.player.equipped_weapon.weapon_type, self.player.equipped_spell.spell_type)
 
         # Get all light objects
         for light in self.tilemap.extract([('light', 0), ('torch', 0)], keep=True):

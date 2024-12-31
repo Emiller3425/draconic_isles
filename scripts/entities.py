@@ -184,9 +184,9 @@ class Player(PhysicsEntity):
         self.is_melee_attacking = False
         self.nearby_bonfires = []
         self.nearby_bonfire_objects = []
-        self.weapon_inventory = [Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10), Weapon(self.game, 'basic_sword', 10, 30, 10)]
-        self.equipped_melee = self.weapon_inventory[0]
-        self.spell_inventory = [Spell(self.game, 'fireball', 20, 10, 2, 0), Spell(self.game, 'fireball', 20, 10, 2, 0), Spell(self.game, 'fireball', 20, 10, 2, 0), Spell(self.game, 'fireball', 20, 10, 2, 0), Spell(self.game, 'fireball', 20, 10, 2, 0), Spell(self.game, 'fireball', 20, 10, 2, 0)]
+        self.weapon_inventory = [Weapon(self.game, 'basic_sword', 10, 30, 10),Weapon(self.game, 'basic_sword', 10, 30, 10),Weapon(self.game, 'basic_sword', 10, 30, 10),Weapon(self.game, 'basic_sword', 10, 30, 10),Weapon(self.game, 'basic_sword', 10, 30, 10),Weapon(self.game, 'basic_sword', 10, 30, 10),]
+        self.equipped_weapon = self.weapon_inventory[0]
+        self.spell_inventory = [Spell(self.game, 'fireball', 20, 10, 2, 0),Spell(self.game, 'fireball', 20, 10, 2, 0),Spell(self.game, 'fireball', 20, 10, 2, 0),Spell(self.game, 'fireball', 20, 10, 2, 0),Spell(self.game, 'fireball', 20, 10, 2, 0),Spell(self.game, 'fireball', 20, 10, 2, 0),Spell(self.game, 'fireball', 20, 10, 2, 0),]
         self.equipped_spell = self.spell_inventory[0]
 
         self.stamina_recovery_start = None
@@ -237,7 +237,7 @@ class Player(PhysicsEntity):
             'max_stamina' : self.max_stamina,
             'max_mana' : self.max_mana,
             'souls' : self.souls,
-            'equipped_melee' : self.equipped_melee.weapon_type,
+            'equipped_weapon' : self.equipped_weapon.weapon_type,
             'equipped_spell' : self.equipped_spell.spell_type,
             'spawn_point' : self.spawn_point,
             'level' : self.level,
@@ -372,10 +372,10 @@ class Player(PhysicsEntity):
 
 
     def melee(self):
-        if self.attack_cooldown == 0 and self.stamina >= self.equipped_melee.stamina_cost:
+        if self.attack_cooldown == 0 and self.stamina >= self.equipped_weapon.stamina_cost:
             super().melee()
 
-            self.stamina -= self.equipped_melee.stamina_cost
+            self.stamina -= self.equipped_weapon.stamina_cost
             self.stamina_recovery_start = pygame.time.get_ticks()
 
             # Set the melee attack duration to 10 frames
@@ -384,11 +384,11 @@ class Player(PhysicsEntity):
 
             for enemy in self.game.enemies:
                 if self.melee_hitbox and self.melee_hitbox.colliderect(enemy.damage_rect()):
-                    enemy.health -= self.equipped_melee.damage
+                    enemy.health -= self.equipped_weapon.damage
                     knockback_vector = [enemy.pos[0] - self.pos[0], enemy.pos[1] - self.pos[1]]
                     enemy.apply_knockback(knockback_vector, knockback_strength=3)
 
-            self.attack_cooldown = self.equipped_melee.cooldown
+            self.attack_cooldown = self.equipped_weapon.cooldown
 
     def cast_spell(self):
         if self.mana >= self.equipped_spell.mana_cost:
@@ -415,9 +415,6 @@ class Player(PhysicsEntity):
             self.mana -= self.equipped_spell.mana_cost
             self.mana_recovery_start = pygame.time.get_ticks()
 
-        else:
-            print("Not enough mana to cast the spell.")
-
     def render(self, surf, offset=(0, 0)):
 
         # Render damage hitbox
@@ -443,11 +440,11 @@ class Player(PhysicsEntity):
         if self.melee_hitbox is not None:
             # Select weapon image based on facing direction
             if self.is_facing in ['up', 'down']:
-                weapon_image = self.game.assets[self.equipped_melee.weapon_type + '_vertical']
+                weapon_image = self.game.assets[self.equipped_weapon.weapon_type + '_vertical']
                 flip_horizontally = False
                 flip_vertically = self.is_facing == 'down'  # Flip vertically if facing down
             else:
-                weapon_image = self.game.assets[self.equipped_melee.weapon_type + '_horizontal']
+                weapon_image = self.game.assets[self.equipped_weapon.weapon_type + '_horizontal']
                 flip_horizontally = self.is_facing == 'left'  # Flip horizontally if facing left
                 flip_vertically = False
 
