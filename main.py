@@ -414,6 +414,7 @@ class Game:
             
             if self.display_equipped_spell_details:
                 self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell.spell_type], (self.screen.get_width() - 650, self.screen.get_height() - 530)), (500, 340))
+                self.ui.render_spell_name_stats(self.screen, self.player)
 
             # Render Equipped Items
             if self.player.equipped_weapon is not None:

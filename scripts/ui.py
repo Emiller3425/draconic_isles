@@ -298,10 +298,22 @@ class UI:
     def render_weapon_name_stats(self, surf, player):
         left_shift = 0
 
+        temp_reversed_weapon_damage = str(player.equipped_weapon.damage)
+        reversed_weapon_damage = ""
+        for i in range(0, len(temp_reversed_weapon_damage)):
+            reversed_weapon_damage += temp_reversed_weapon_damage[len(temp_reversed_weapon_damage)-i-1]
+        
+        temp_reversed_weapon_cooldown = str(player.equipped_weapon.cooldown)
+        reversed_weapon_cooldown = ""
+        for i in range(0, len(temp_reversed_weapon_cooldown)):
+            reversed_weapon_cooldown += temp_reversed_weapon_cooldown[len(temp_reversed_weapon_cooldown)-i-1]
+
+        temp_reversed_weapon_stamina_cost = str(player.equipped_weapon.stamina_cost)
+        reversed_weapon_stamina_cost = ""
+        for i in range(0, len(temp_reversed_weapon_stamina_cost)):
+            reversed_weapon_stamina_cost += temp_reversed_weapon_stamina_cost[len(temp_reversed_weapon_stamina_cost)-i-1]
+
         reversed_weapon_name = ""
-        revered_weapon_damag = ""
-        revered_weapon_cooldown = ""
-        reversed_stamina_cost = ""
 
         for i in range(0, len(player.equipped_weapon.weapon_type)):
             reversed_weapon_name += player.equipped_weapon.weapon_type[len(player.equipped_weapon.weapon_type)-i-1]
@@ -328,6 +340,12 @@ class UI:
         
         left_shift = 0
 
+        for i in reversed_weapon_damage:
+            surf.blit(pygame.transform.scale(self.grey_digits[int(i)], (surf.get_width() - 716, surf.get_height() - 591)), (585 - left_shift, 218))
+            left_shift += 5
+
+        left_shift = 0
+
         for i in ':nwodlooc':
             if i == ':':
                 index = 27
@@ -336,6 +354,11 @@ class UI:
             else:
                 index = ord(i) - 97
             surf.blit(pygame.transform.scale(self.grey_letters[int(index)], (surf.get_width() - 716, surf.get_height() - 591)), (525 - left_shift, 230))
+            left_shift += 5
+        left_shift = 0
+
+        for i in reversed_weapon_cooldown:
+            surf.blit(pygame.transform.scale(self.grey_digits[int(i)], (surf.get_width() - 716, surf.get_height() - 591)), (585 - left_shift, 230))
             left_shift += 5
 
         left_shift = 0
@@ -350,6 +373,95 @@ class UI:
             surf.blit(pygame.transform.scale(self.grey_letters[int(index)], (surf.get_width() - 716, surf.get_height() - 591)), (545 - left_shift, 242))
             left_shift += 5
 
+        left_shift = 0
+
+        for i in reversed_weapon_stamina_cost:
+            surf.blit(pygame.transform.scale(self.grey_digits[int(i)], (surf.get_width() - 716, surf.get_height() - 591)), (585 - left_shift, 242))
+            left_shift += 5
+
 
     def render_spell_name_stats(self, surf, player):
-        pass
+        left_shift = 0
+
+        temp_reversed_spell_damage = str(player.equipped_spell.damage)
+        reversed_spell_damage = ""
+        for i in range(0, len(temp_reversed_spell_damage)):
+            reversed_spell_damage += temp_reversed_spell_damage[len(temp_reversed_spell_damage)-i-1]
+        
+        temp_reversed_spell_mana_cost = str(player.equipped_spell.mana_cost)
+        reversed_spell_mana_cost = ""
+        for i in range(0, len(temp_reversed_spell_mana_cost)):
+            reversed_spell_mana_cost+= temp_reversed_spell_mana_cost[len(temp_reversed_spell_mana_cost)-i-1]
+
+        temp_reversed_spell_velocity = str(player.equipped_spell.velocity)
+        reversed_spel_velocity = ""
+        for i in range(0, len(temp_reversed_spell_velocity)):
+            reversed_spel_velocity += temp_reversed_spell_velocity[len(temp_reversed_spell_velocity)-i-1]
+
+        reversed_spell_name = ""
+
+        for i in range(0, len(player.equipped_spell.spell_type)):
+            reversed_spell_name += player.equipped_spell.spell_type[len(player.equipped_spell.spell_type)-i-1]
+
+        for i in reversed_spell_name:
+            if i == '_':
+                index = 26
+            else:
+                index = ord(i) - 97
+            surf.blit(pygame.transform.scale(self.grey_letters[int(index)], (surf.get_width() - 714, surf.get_height() - 591)), (565 - left_shift, 415))
+            left_shift += 7
+        
+        left_shift = 0
+
+        for i in ':egamad':
+            if i == ':':
+                index = 27
+            elif i == '_':
+                index = 26
+            else:
+                index = ord(i) - 97
+            surf.blit(pygame.transform.scale(self.grey_letters[int(index)], (surf.get_width() - 716, surf.get_height() - 591)), (515 - left_shift, 430))
+            left_shift += 5
+        
+        left_shift = 0
+
+        for i in reversed_spell_damage:
+            surf.blit(pygame.transform.scale(self.grey_digits[int(i)], (surf.get_width() - 716, surf.get_height() - 591)), (585 - left_shift, 430))
+            left_shift += 5
+        
+        left_shift = 0
+
+        for i in ':tsoc_anam':
+            if i == ':':
+                index = 27
+            elif i == '_':
+                index = 26
+            else:
+                index = ord(i) - 97
+            surf.blit(pygame.transform.scale(self.grey_letters[int(index)], (surf.get_width() - 716, surf.get_height() - 591)), (530 - left_shift, 442))
+            left_shift += 5
+
+        left_shift = 0
+
+        for i in reversed_spell_mana_cost:
+            surf.blit(pygame.transform.scale(self.grey_digits[int(i)], (surf.get_width() - 716, surf.get_height() - 591)), (585 - left_shift, 442))
+            left_shift += 5
+
+        left_shift = 0
+
+        for i in ':yticolev':
+            if i == ':':
+                index = 27
+            elif i == '_':
+                index = 26
+            else:
+                index = ord(i) - 97
+            surf.blit(pygame.transform.scale(self.grey_letters[int(index)], (surf.get_width() - 716, surf.get_height() - 591)), (525 - left_shift, 454))
+            left_shift += 5
+        
+        left_shift = 0
+
+        for i in reversed_spel_velocity:
+            surf.blit(pygame.transform.scale(self.grey_digits[int(i)], (surf.get_width() - 716, surf.get_height() - 591)), (585 - left_shift, 454))
+            left_shift += 5
+        
