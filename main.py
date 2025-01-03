@@ -134,6 +134,8 @@ class Game:
             'red_digits' : load_images('digits/red_digits'),
             'green_digits' : load_images('digits/green_digits'),
             'blue_digits' : load_images('digits/blue_digits'),
+            # letters
+            'grey_letters' : load_images('letters/grey_letters'),
             # dropped souls
             'dropped_souls' : load_image('drops/souls/0.png'),
             # upgrade arrows
@@ -376,6 +378,11 @@ class Game:
         equipped_weapon_rect = pygame.Rect(136, 144, 107, 112)
         equipped_spell_rect = pygame.Rect(136, 352, 107, 112)
 
+        # Booleans for displaying details
+        self.display_equipped_weapon_details = False
+        self.display_equipped_spell_details = False
+
+
         # Other Rects
         inventory_render_x_offset = 0
         inventory_render_y_offset = 0
@@ -400,6 +407,14 @@ class Game:
                 pygame.draw.rect(self.screen, (188, 158, 130), equipped_weapon_rect)
             if equipped_spell_rect.collidepoint(cursor_pos):
                 pygame.draw.rect(self.screen, (188, 158, 130), equipped_spell_rect)
+
+            if self.display_equipped_weapon_details:
+                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_weapon.weapon_type], (self.screen.get_width() - 650, self.screen.get_height() - 530)), (500,120))
+                self.ui.render_weapon_name_stats(self.screen, self.player)
+            
+            if self.display_equipped_spell_details:
+                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell.spell_type], (self.screen.get_width() - 650, self.screen.get_height() - 530)), (500, 340))
+
             # Render Equipped Items
             if self.player.equipped_weapon is not None:
                 self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_weapon.weapon_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,150))
@@ -438,6 +453,18 @@ class Game:
 
             # Events
             for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+                # Instead of drag and drop, maybe click an item in inventory, buttons show to allow equip/dismantel? Kind of like a destiny like inventory system
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if equipped_weapon_rect.collidepoint(cursor_pos):
+                        self.display_equipped_weapon_details = True
+                    elif equipped_spell_rect.collidepoint(cursor_pos):
+                        self.display_equipped_spell_details = True
+                if event.type == pygame.MOUSEBUTTONUP:
+                    pass
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE or event.key == pygame.K_i:
                         return
@@ -759,7 +786,6 @@ class Game:
             # Drop Particles
             for rect, drop_type in self.drop_particle_spawners:
                 # Soul Drop Particles
-                print(rect)
                 if random.random() < 0.25 and drop_type == Souls:
                     pos = (rect.x + random.random() * rect.width, rect.y + random.random() * rect.height)
                     self.particles.append(Particle(self, 'soul_particle', pos, velocity=[0, -0.2], frame=random.randint(0, 10)))

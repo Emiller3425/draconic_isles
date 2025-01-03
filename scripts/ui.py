@@ -21,6 +21,7 @@ class UI:
         self.red_digits = game.assets['red_digits']
         self.blue_digits = game.assets['blue_digits']
         self.green_digits = game.assets['green_digits']
+        self.grey_letters = game.assets['grey_letters']
         self.upgrade_arrow = game.assets['upgrade_arrow']
         self.upgrade_arrow_hover = game.assets['upgrade_arrow_hover']
         self.downgrade_arrow = game.assets['downgrade_arrow']
@@ -225,7 +226,7 @@ class UI:
             
         # Loop through and print digits
         for i in reversed_display_souls:
-            surf.blit(pygame.transform.scale(self.grey_digits[int(i)], (surf.get_width() - 713, surf.get_height() - 587)), (485 - left_shift, 520 + 6))
+            surf.blit(pygame.transform.scale(self.grey_digits[int(i)], (surf.get_width() - 713, surf.get_height() - 587)), (485 - left_shift, 526))
             left_shift += 9
 
     def render_health(self, surf, player):
@@ -249,7 +250,7 @@ class UI:
             pygame.transform.scale(self.red_digits[int(i)], surf.get_size())
             # TODO draw out th rest of the upgrade screen and how we want it.
             # How we will transform sizes of digits and shit
-            surf.blit(pygame.transform.scale(self.red_digits[int(i)], (surf.get_width() - 710, surf.get_height() - 585)), (420 - left_shift, 155 + 6))
+            surf.blit(pygame.transform.scale(self.red_digits[int(i)], (surf.get_width() - 710, surf.get_height() - 585)), (420 - left_shift, 161))
             left_shift += 12
 
     def render_stamina(self, surf, player):
@@ -270,7 +271,7 @@ class UI:
 
                 # Loop through and print digits
         for i in reversed_display_stamina:
-            surf.blit(pygame.transform.scale(self.green_digits[int(i)], (surf.get_width() - 710, surf.get_height() - 585)), (420 - left_shift, 275 + 6))
+            surf.blit(pygame.transform.scale(self.green_digits[int(i)], (surf.get_width() - 710, surf.get_height() - 585)), (420 - left_shift, 281))
             left_shift += 12
 
     def render_mana(self, surf, player):
@@ -291,5 +292,64 @@ class UI:
 
         # Loop through and print digits
         for i in reversed_display_mana:
-            surf.blit(pygame.transform.scale(self.blue_digits[int(i)], (surf.get_width() - 710, surf.get_height() - 585)), (420 - left_shift, 395 + 6))
+            surf.blit(pygame.transform.scale(self.blue_digits[int(i)], (surf.get_width() - 710, surf.get_height() - 585)), (420 - left_shift, 401))
             left_shift += 12
+
+    def render_weapon_name_stats(self, surf, player):
+        left_shift = 0
+
+        reversed_weapon_name = ""
+        revered_weapon_damag = ""
+        revered_weapon_cooldown = ""
+        reversed_stamina_cost = ""
+
+        for i in range(0, len(player.equipped_weapon.weapon_type)):
+            reversed_weapon_name += player.equipped_weapon.weapon_type[len(player.equipped_weapon.weapon_type)-i-1]
+
+        for i in reversed_weapon_name:
+            if i == '_':
+                index = 26
+            else:
+                index = ord(i) - 97
+            surf.blit(pygame.transform.scale(self.grey_letters[int(index)], (surf.get_width() - 714, surf.get_height() - 591)), (565 - left_shift, 200))
+            left_shift += 7
+        
+        left_shift = 0
+
+        for i in ':egamad':
+            if i == ':':
+                index = 27
+            elif i == '_':
+                index = 26
+            else:
+                index = ord(i) - 97
+            surf.blit(pygame.transform.scale(self.grey_letters[int(index)], (surf.get_width() - 716, surf.get_height() - 591)), (515 - left_shift, 218))
+            left_shift += 5
+        
+        left_shift = 0
+
+        for i in ':nwodlooc':
+            if i == ':':
+                index = 27
+            elif i == '_':
+                index = 26
+            else:
+                index = ord(i) - 97
+            surf.blit(pygame.transform.scale(self.grey_letters[int(index)], (surf.get_width() - 716, surf.get_height() - 591)), (525 - left_shift, 230))
+            left_shift += 5
+
+        left_shift = 0
+
+        for i in ':tsoc_animats':
+            if i == ':':
+                index = 27
+            elif i == '_':
+                index = 26
+            else:
+                index = ord(i) - 97
+            surf.blit(pygame.transform.scale(self.grey_letters[int(index)], (surf.get_width() - 716, surf.get_height() - 591)), (545 - left_shift, 242))
+            left_shift += 5
+
+
+    def render_spell_name_stats(self, surf, player):
+        pass

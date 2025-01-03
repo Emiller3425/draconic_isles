@@ -184,9 +184,9 @@ class Player(PhysicsEntity):
         self.is_melee_attacking = False
         self.nearby_bonfires = []
         self.nearby_bonfire_objects = []
-        self.weapon_inventory = [Weapon(self.game, 'basic_sword', 10, 30, 10),Weapon(self.game, 'basic_sword', 10, 30, 10),Weapon(self.game, 'basic_sword', 10, 30, 10),Weapon(self.game, 'basic_sword', 10, 30, 10),Weapon(self.game, 'basic_sword', 10, 30, 10),Weapon(self.game, 'basic_sword', 10, 30, 10),]
+        self.weapon_inventory = [Weapon(self.game, 'basic_sword', 10, 30, 10),]
         self.equipped_weapon = self.weapon_inventory[0]
-        self.spell_inventory = [Spell(self.game, 'fireball', 20, 10, 2, 0),Spell(self.game, 'fireball', 20, 10, 2, 0),Spell(self.game, 'fireball', 20, 10, 2, 0),Spell(self.game, 'fireball', 20, 10, 2, 0),Spell(self.game, 'fireball', 20, 10, 2, 0),Spell(self.game, 'fireball', 20, 10, 2, 0),Spell(self.game, 'fireball', 20, 10, 2, 0),]
+        self.spell_inventory = [Spell(self.game, 'fireball', 20, 10, 2, 0),]
         self.equipped_spell = self.spell_inventory[0]
 
         self.stamina_recovery_start = None
@@ -314,7 +314,7 @@ class Player(PhysicsEntity):
         self.game.drops.clear()
         self.game.drop_particle_spawners.clear()
         if self.souls > 0:
-            self.game.drops.append(Souls(self.game, self.pos.copy(), 'souls'. self.game.assets['dropped_souls'], self.souls))
+            self.game.drops.append(Souls(self.game, self.pos.copy(), 'souls', self.game.assets['dropped_souls'], self.souls))
             self.souls = 0
         self.pos = self.spawn_point.copy()
         self.health = self.max_health
@@ -411,6 +411,8 @@ class Player(PhysicsEntity):
             if self.equipped_spell.spell_type == 'fireball':
                 fireball = FireballSpell(self.game, (self.pos[0] + 2, self.pos[1] + 8), self.spell_velocity, self.vertical_spell, self.vertical_spell_flip)
                 self.game.projectiles.append(fireball)
+            if self.equipped_spell.spell_type == 'lightning':
+                pass
 
             self.mana -= self.equipped_spell.mana_cost
             self.mana_recovery_start = pygame.time.get_ticks()

@@ -32,7 +32,7 @@ class Drop:
         # TODO pass stats from item to thing
         if self.drop_name in self.potential_drops['weapons']:
             self.item = Weapon(self.game, self.drop_name, self.potential_drops['weapons'][self.drop_name]['damage'], self.potential_drops['weapons'][self.drop_name]['cooldown'], self.potential_drops['weapons'][self.drop_name]['stamina_cost'])
-        else:
+        elif self.drop_name in self.potential_drops['spells']:
              self.item = Spell(self.game, self.drop_name, self.potential_drops['spells'][self.drop_name]['damage'], self.potential_drops['spells'][self.drop_name]['mana_cost'], self.potential_drops['spells'][self.drop_name]['velocity'], self.potential_drops['spells'][self.drop_name]['restoration'])
 
     def update(self):
@@ -61,7 +61,6 @@ class Drop:
             else:
                 self.game.player.spell_inventory.append(self.item)
                 self.game.drops.remove(self)
-            print(self.game.player.weapon_inventory, self.game.player.spell_inventory)
 
     def render(self, surf, offset = (0, 0)):
         img = self.image
