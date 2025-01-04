@@ -382,7 +382,6 @@ class Game:
         self.display_equipped_weapon_details = False
         self.display_equipped_spell_details = False
 
-
         # Other Rects
         inventory_render_x_offset = 0
         inventory_render_y_offset = 0
@@ -403,25 +402,7 @@ class Game:
                 if non_equipped_spell.collidepoint(cursor_pos):
                     pygame.draw.rect(self.screen, (188, 158, 130), non_equipped_spell)
 
-            if equipped_weapon_rect.collidepoint(cursor_pos):
-                pygame.draw.rect(self.screen, (188, 158, 130), equipped_weapon_rect)
-            if equipped_spell_rect.collidepoint(cursor_pos):
-                pygame.draw.rect(self.screen, (188, 158, 130), equipped_spell_rect)
-
-            if self.display_equipped_weapon_details:
-                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_weapon.weapon_type], (self.screen.get_width() - 650, self.screen.get_height() - 530)), (500,120))
-                self.ui.render_weapon_name_stats(self.screen, self.player)
-            
-            if self.display_equipped_spell_details:
-                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell.spell_type], (self.screen.get_width() - 650, self.screen.get_height() - 530)), (500, 340))
-                self.ui.render_spell_name_stats(self.screen, self.player)
-
-            # Render Equipped Items
-            if self.player.equipped_weapon is not None:
-                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_weapon.weapon_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,150))
-            if self.player.equipped_spell is not None:
-                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell.spell_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,360))
-            # Render Inventory
+            # Add handling to only add rects once so using conditional
 
             # Weapons
             inventory_render_x_offset = 0
@@ -433,10 +414,10 @@ class Game:
                     inventory_render_x_offset = 0
                 if weapon is not self.player.equipped_weapon:
                     self.screen.blit(self.assets[weapon.weapon_type], (278 + inventory_render_x_offset, 150 + inventory_render_y_offset))
-                    non_equipped_weapon_rects.append(pygame.Rect(271 + inventory_render_x_offset, 144 + inventory_render_y_offset, 43, 46))
+                    if len(non_equipped_weapon_rects) < len(self.player.weapon_inventory) - 1:
+                        non_equipped_weapon_rects.append(pygame.Rect(271 + inventory_render_x_offset, 144 + inventory_render_y_offset, 43, 46))
                     inventory_render_x_offset += 54
                     non_equipped_weapons_count += 1
-
 
             # Spells
             inventory_render_x_offset = 0
@@ -448,9 +429,31 @@ class Game:
                     inventory_render_x_offset = 0
                 if spell is not self.player.equipped_spell:
                     self.screen.blit(self.assets[spell.spell_type], (278 + inventory_render_x_offset, 360 + inventory_render_y_offset))
-                    non_equipped_spell_rects.append(pygame.Rect(271 + inventory_render_x_offset, 352 + inventory_render_y_offset, 43, 46))
+                    if len(non_equipped_spell_rects) < len(self.player.spell_inventory) - 1:
+                        non_equipped_spell_rects.append(pygame.Rect(271 + inventory_render_x_offset, 352 + inventory_render_y_offset, 43, 46))
                     inventory_render_x_offset += 54
                     non_equipped_spells_count += 1
+
+            # Equipped Weapons
+            if self.display_equipped_weapon_details:
+                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_weapon.weapon_type], (self.screen.get_width() - 650, self.screen.get_height() - 530)), (500,120))
+                self.ui.render_weapon_name_stats(self.screen, self.player)
+            
+            if self.display_equipped_spell_details:
+                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell.spell_type], (self.screen.get_width() - 650, self.screen.get_height() - 530)), (500, 340))
+                self.ui.render_spell_name_stats(self.screen, self.player)
+
+            if equipped_weapon_rect.collidepoint(cursor_pos):
+                pygame.draw.rect(self.screen, (188, 158, 130), equipped_weapon_rect)
+            if equipped_spell_rect.collidepoint(cursor_pos):
+                pygame.draw.rect(self.screen, (188, 158, 130), equipped_spell_rect)
+
+            # Render Equipped Items
+            if self.player.equipped_weapon is not None:
+                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_weapon.weapon_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,150))
+            if self.player.equipped_spell is not None:
+                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell.spell_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,360))
+            # Render Inventory
 
             # Events
             for event in pygame.event.get():
@@ -460,10 +463,15 @@ class Game:
 
                 # Instead of drag and drop, maybe click an item in inventory, buttons show to allow equip/dismantel? Kind of like a destiny like inventory system
                 if event.type == pygame.MOUSEBUTTONDOWN:
+                    for non_equipped_weapon in enumerate(non_equipped_weapon_rects):
+                        print(non_equipped_weapon)
                     if equipped_weapon_rect.collidepoint(cursor_pos):
                         self.display_equipped_weapon_details = True
                     elif equipped_spell_rect.collidepoint(cursor_pos):
                         self.display_equipped_spell_details = True
+                    else:
+                        self.display_equipped_weapon_details = False
+                        self.display_equipped_spell_details = False
                 if event.type == pygame.MOUSEBUTTONUP:
                     pass
                 if event.type == pygame.KEYDOWN:

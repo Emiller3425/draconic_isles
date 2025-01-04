@@ -38,8 +38,10 @@ class Chest:
         self.select_drops()
 
     def drop_items(self):
-        for drop in self.drops:
-            self.game.drops.append(Drop(self.game, (self.pos[0], self.pos[1] + 8), drop, self.game.assets[drop + '_drop']))
+        if not self.is_opened:
+            for drop in self.drops:
+                self.game.drops.append(Drop(self.game, (self.pos[0], self.pos[1] + 8), drop, self.game.assets[drop + '_drop']))
+            self.is_opened = True
 
     def select_drops(self):
         # If weapon/spell is specified

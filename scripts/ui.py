@@ -464,4 +464,7 @@ class UI:
         for i in reversed_spel_velocity:
             surf.blit(pygame.transform.scale(self.grey_digits[int(i)], (surf.get_width() - 716, surf.get_height() - 591)), (585 - left_shift, 454))
             left_shift += 5
+
+
+        # Render restoration if I end up doing anything with that
         

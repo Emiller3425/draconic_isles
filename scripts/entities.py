@@ -206,7 +206,7 @@ class Player(PhysicsEntity):
 
     def open_chest(self):
         chest = self.nearby_chest_objects[0]
-        chest.is_opened = True
+        
         # TODO Item stuff
         chest.drop_items()
 
