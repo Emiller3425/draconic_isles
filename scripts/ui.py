@@ -295,28 +295,28 @@ class UI:
             surf.blit(pygame.transform.scale(self.blue_digits[int(i)], (surf.get_width() - 710, surf.get_height() - 585)), (420 - left_shift, 401))
             left_shift += 12
 
-    def render_weapon_name_stats(self, surf, player):
+    def render_weapon_name_stats(self, surf, player, weapon):
         left_shift = 0
 
-        temp_reversed_weapon_damage = str(player.equipped_weapon.damage)
+        temp_reversed_weapon_damage = str(weapon.damage)
         reversed_weapon_damage = ""
         for i in range(0, len(temp_reversed_weapon_damage)):
             reversed_weapon_damage += temp_reversed_weapon_damage[len(temp_reversed_weapon_damage)-i-1]
         
-        temp_reversed_weapon_cooldown = str(player.equipped_weapon.cooldown)
+        temp_reversed_weapon_cooldown = str(weapon.cooldown)
         reversed_weapon_cooldown = ""
         for i in range(0, len(temp_reversed_weapon_cooldown)):
             reversed_weapon_cooldown += temp_reversed_weapon_cooldown[len(temp_reversed_weapon_cooldown)-i-1]
 
-        temp_reversed_weapon_stamina_cost = str(player.equipped_weapon.stamina_cost)
+        temp_reversed_weapon_stamina_cost = str(weapon.stamina_cost)
         reversed_weapon_stamina_cost = ""
         for i in range(0, len(temp_reversed_weapon_stamina_cost)):
             reversed_weapon_stamina_cost += temp_reversed_weapon_stamina_cost[len(temp_reversed_weapon_stamina_cost)-i-1]
 
         reversed_weapon_name = ""
 
-        for i in range(0, len(player.equipped_weapon.weapon_type)):
-            reversed_weapon_name += player.equipped_weapon.weapon_type[len(player.equipped_weapon.weapon_type)-i-1]
+        for i in range(0, len(weapon.weapon_type)):
+            reversed_weapon_name += weapon.weapon_type[len(weapon.weapon_type)-i-1]
 
         for i in reversed_weapon_name:
             if i == '_':
@@ -380,28 +380,28 @@ class UI:
             left_shift += 5
 
 
-    def render_spell_name_stats(self, surf, player):
+    def render_spell_name_stats(self, surf, player, spell):
         left_shift = 0
 
-        temp_reversed_spell_damage = str(player.equipped_spell.damage)
+        temp_reversed_spell_damage = str(spell.damage)
         reversed_spell_damage = ""
         for i in range(0, len(temp_reversed_spell_damage)):
             reversed_spell_damage += temp_reversed_spell_damage[len(temp_reversed_spell_damage)-i-1]
         
-        temp_reversed_spell_mana_cost = str(player.equipped_spell.mana_cost)
+        temp_reversed_spell_mana_cost = str(spell.mana_cost)
         reversed_spell_mana_cost = ""
         for i in range(0, len(temp_reversed_spell_mana_cost)):
             reversed_spell_mana_cost+= temp_reversed_spell_mana_cost[len(temp_reversed_spell_mana_cost)-i-1]
 
-        temp_reversed_spell_velocity = str(player.equipped_spell.velocity)
+        temp_reversed_spell_velocity = str(spell.velocity)
         reversed_spel_velocity = ""
         for i in range(0, len(temp_reversed_spell_velocity)):
             reversed_spel_velocity += temp_reversed_spell_velocity[len(temp_reversed_spell_velocity)-i-1]
 
         reversed_spell_name = ""
 
-        for i in range(0, len(player.equipped_spell.spell_type)):
-            reversed_spell_name += player.equipped_spell.spell_type[len(player.equipped_spell.spell_type)-i-1]
+        for i in range(0, len(spell.spell_type)):
+            reversed_spell_name += spell.spell_type[len(spell.spell_type)-i-1]
 
         for i in reversed_spell_name:
             if i == '_':

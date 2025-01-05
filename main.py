@@ -31,7 +31,6 @@ class Game:
         self.screen = pygame.display.set_mode((720, 600))
         self.screen.fill((0, 0, 0))
         self.display = pygame.Surface((360, 280), pygame.SRCALPHA)
-        self.upgrade_screen_display = pygame.Surface((360, 280), pygame.SRCALPHA)
         self.clock = pygame.time.Clock()
         self.show_start_screen = True
         self.show_upgrade_screen = False
@@ -150,6 +149,10 @@ class Game:
             'confirm_button' : load_image('screens/buttons/confirm_button/confirm_button.png'),
             'confirm_button_hover' : load_image('screens/buttons/confirm_button/confirm_button_hover.png'),
             'confirm_button_greyed_out' : load_image('screens/buttons/confirm_button/confirm_button_greyed_out.png'),
+            # equip button
+            'equip_button' : load_image('screens/buttons/equip_button/equip_button.png'),
+            'equip_button_hover' : load_image('screens/buttons/equip_button/equip_button_hover.png'),
+            'equip_button_greyed_out' : load_image('screens/buttons/equip_button/equip_button_greyed_out.png'),
             # next level ui piece
             'next_level' : load_image('ui/next_level.png'),
             # chests
@@ -378,6 +381,10 @@ class Game:
         equipped_weapon_rect = pygame.Rect(136, 144, 107, 112)
         equipped_spell_rect = pygame.Rect(136, 352, 107, 112)
 
+        # Equip button rects
+        equip_weapon_button_rect = pygame.Rect(510, 260, 60, 30)
+        equip_spell_button_rect = pygame.Rect(510, 310, 60, 30)
+
         # Booleans for displaying details
         self.display_equipped_weapon_details = False
         self.display_equipped_spell_details = False
@@ -389,20 +396,48 @@ class Game:
         non_equipped_weapon_rects = []
         non_equipped_spell_rects = []
 
+        non_equipped_weapons_render_stats = []
+
+        for _ in self.player.weapon_inventory:
+            if _ is not self.player.equipped_weapon:
+                non_equipped_weapons_render_stats.append(False)
+
+        non_equipped_spells_render_stats = []
+
+        for _ in self.player.spell_inventory:
+            if _ is not self.player.equipped_spell:
+                non_equipped_spells_render_stats.append(False)
+
         cursor_pos = pygame.mouse.get_pos()
         while True:
             self.screen.blit(pygame.transform.scale(self.assets['inventory_screen'], (self.screen.get_width() - 200, self.screen.get_height() - 200)), (100,100))
             cursor_pos = pygame.mouse.get_pos()
 
+            # Hover Over non-equipped weapons
             for non_equipped_weapon in non_equipped_weapon_rects:
                 if non_equipped_weapon.collidepoint(cursor_pos):
                     pygame.draw.rect(self.screen, (188, 158, 130), non_equipped_weapon)
 
+            # hover over non-equipped spells
             for non_equipped_spell in non_equipped_spell_rects:
                 if non_equipped_spell.collidepoint(cursor_pos):
                     pygame.draw.rect(self.screen, (188, 158, 130), non_equipped_spell)
+                
+            # equip weapon button redering
+            if True not in non_equipped_weapons_render_stats:
+                self.screen.blit(pygame.transform.scale(self.assets['equip_button_greyed_out'], (self.screen.get_width() - 660, self.screen.get_height() - 570)), (510, 260))
+            elif equip_weapon_button_rect.collidepoint(cursor_pos):
+                self.screen.blit(pygame.transform.scale(self.assets['equip_button_hover'], (self.screen.get_width() - 660, self.screen.get_height() - 570)), (510, 260))
+            else:
+                self.screen.blit(pygame.transform.scale(self.assets['equip_button'], (self.screen.get_width() - 660, self.screen.get_height() - 570)), (510, 260))
 
-            # Add handling to only add rects once so using conditional
+            # equip spell button rendering
+            if True not in non_equipped_spells_render_stats:
+                self.screen.blit(pygame.transform.scale(self.assets['equip_button_greyed_out'], (self.screen.get_width() - 660, self.screen.get_height() - 570)), (510, 310))
+            elif equip_spell_button_rect.collidepoint(cursor_pos):
+                self.screen.blit(pygame.transform.scale(self.assets['equip_button_hover'], (self.screen.get_width() - 660, self.screen.get_height() - 570)), (510, 310))
+            else:
+                self.screen.blit(pygame.transform.scale(self.assets['equip_button'], (self.screen.get_width() - 660, self.screen.get_height() - 570)), (510, 310))
 
             # Weapons
             inventory_render_x_offset = 0
@@ -434,15 +469,21 @@ class Game:
                     inventory_render_x_offset += 54
                     non_equipped_spells_count += 1
 
-            # Equipped Weapons
-            if self.display_equipped_weapon_details:
-                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_weapon.weapon_type], (self.screen.get_width() - 650, self.screen.get_height() - 530)), (500,120))
-                self.ui.render_weapon_name_stats(self.screen, self.player)
-            
-            if self.display_equipped_spell_details:
-                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell.spell_type], (self.screen.get_width() - 650, self.screen.get_height() - 530)), (500, 340))
-                self.ui.render_spell_name_stats(self.screen, self.player)
+            # Non-Equipped Weapon Stats
+            for non_equipped_weapon in enumerate(non_equipped_weapon_rects):
+                if non_equipped_weapons_render_stats[non_equipped_weapon[0]]:
+                    pygame.draw.rect(self.screen, (100, 0, 0), non_equipped_weapon[1], 2)
+                    self.screen.blit(pygame.transform.scale(self.assets[self.player.weapon_inventory[non_equipped_weapon[0] + 1].weapon_type], (self.screen.get_width() - 650, self.screen.get_height() - 530)), (500,120))
+                    self.ui.render_weapon_name_stats(self.screen, self.player, self.player.weapon_inventory[non_equipped_weapon[0] + 1])
 
+            # Non-Equipped Spell Stats
+            for non_equipped_spell in enumerate(non_equipped_spell_rects):
+                if non_equipped_spells_render_stats[non_equipped_spell[0]]:
+                    pygame.draw.rect(self.screen, (100, 0, 0), non_equipped_spell[1], 2)
+                    self.screen.blit(pygame.transform.scale(self.assets[self.player.spell_inventory[non_equipped_spell[0] + 1].spell_type], (self.screen.get_width() - 650, self.screen.get_height() - 530)), (500,340))
+                    self.ui.render_spell_name_stats(self.screen, self.player, self.player.spell_inventory[non_equipped_spell[0] + 1])
+
+            # If hover render lit up background
             if equipped_weapon_rect.collidepoint(cursor_pos):
                 pygame.draw.rect(self.screen, (188, 158, 130), equipped_weapon_rect)
             if equipped_spell_rect.collidepoint(cursor_pos):
@@ -453,7 +494,18 @@ class Game:
                 self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_weapon.weapon_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,150))
             if self.player.equipped_spell is not None:
                 self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell.spell_type], (self.screen.get_width() - 620, self.screen.get_height() - 500)), (135,360))
-            # Render Inventory
+
+            # Equipped Weapon Stats
+            if self.display_equipped_weapon_details:
+                pygame.draw.rect(self.screen, (100, 0, 0), equipped_weapon_rect, 4)
+                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_weapon.weapon_type], (self.screen.get_width() - 650, self.screen.get_height() - 530)), (500,120))
+                self.ui.render_weapon_name_stats(self.screen, self.player, self.player.equipped_weapon)
+            
+            # Equipped Spell Stats
+            if self.display_equipped_spell_details:
+                pygame.draw.rect(self.screen, (100, 0, 0), equipped_spell_rect, 4)
+                self.screen.blit(pygame.transform.scale(self.assets[self.player.equipped_spell.spell_type], (self.screen.get_width() - 650, self.screen.get_height() - 530)), (500, 340))
+                self.ui.render_spell_name_stats(self.screen, self.player, self.player.equipped_spell)
 
             # Events
             for event in pygame.event.get():
@@ -463,15 +515,42 @@ class Game:
 
                 # Instead of drag and drop, maybe click an item in inventory, buttons show to allow equip/dismantel? Kind of like a destiny like inventory system
                 if event.type == pygame.MOUSEBUTTONDOWN:
+                    # non-equipped weapon click
+                    if True in non_equipped_weapons_render_stats and equip_weapon_button_rect.collidepoint(cursor_pos):
+                        temp_weapon = self.player.weapon_inventory[0]
+                        self.player.weapon_inventory[0] = self.player.weapon_inventory[non_equipped_weapons_render_stats.index(True) + 1]
+                        self.player.equipped_weapon = self.player.weapon_inventory[0]
+                        self.player.weapon_inventory[non_equipped_weapons_render_stats.index(True) + 1] = temp_weapon
+                    if True in non_equipped_spells_render_stats and equip_spell_button_rect.collidepoint(cursor_pos):
+                        temp_spell = self.player.spell_inventory[0]
+                        self.player.spell_inventory[0] = self.player.spell_inventory[non_equipped_spells_render_stats.index(True) + 1]
+                        self.player.equipped_spell = self.player.spell_inventory[0]
+                        self.player.spell_inventory[non_equipped_spells_render_stats.index(True) + 1] = temp_spell
                     for non_equipped_weapon in enumerate(non_equipped_weapon_rects):
-                        print(non_equipped_weapon)
+                        if non_equipped_weapon[1].collidepoint(cursor_pos):
+                            for i in range(0, len(non_equipped_weapon_rects)):
+                                non_equipped_weapons_render_stats[i] = False
+                            non_equipped_weapons_render_stats[non_equipped_weapon[0]] = True
+                            self.display_equipped_weapon_details = False
+                    # non-equipped spell click
+                    for non_equipped_spell in enumerate(non_equipped_spell_rects):
+                        if non_equipped_spell[1].collidepoint(cursor_pos):
+                            for i in range(0, len(non_equipped_spell_rects)):
+                                non_equipped_spells_render_stats[i] = False
+                            non_equipped_spells_render_stats[non_equipped_spell[0]] = True
+                            self.display_equipped_spell_details = False
+                    # equipped weapon click
                     if equipped_weapon_rect.collidepoint(cursor_pos):
+                        for i in range(0, len(non_equipped_weapon_rects)):
+                            non_equipped_weapons_render_stats[i] = False
                         self.display_equipped_weapon_details = True
+                    # equipped spell click
                     elif equipped_spell_rect.collidepoint(cursor_pos):
+                        for i in range(0, len(non_equipped_spell_rects)):
+                            non_equipped_spells_render_stats[i] = False
                         self.display_equipped_spell_details = True
                     else:
-                        self.display_equipped_weapon_details = False
-                        self.display_equipped_spell_details = False
+                        pass
                 if event.type == pygame.MOUSEBUTTONUP:
                     pass
                 if event.type == pygame.KEYDOWN:

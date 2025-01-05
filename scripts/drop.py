@@ -21,11 +21,11 @@ class Drop:
         self.spawner = None
         self.potential_drops = {
             'weapons' : {
-                'basic_sword' : {'damage' : 10, 'cooldown' : 30, 'stamina_cost' : 10,}
+                'basic_sword' : {'damage' : 30, 'cooldown' : 30, 'stamina_cost' : 10,}
             },
             'spells' : {
-                'fireball' : {'damage' : 20, 'mana_cost' : 10, 'velocity': 2, 'restoration' : 0},
-                'lightning' : {'damage' : 30, 'mana_cost' : 25, 'velocity': 40, 'restoration' : 0},
+                'fireball' : {'damage' : 40, 'mana_cost' : 10, 'velocity': 2, 'restoration' : 0},
+                'lightning' : {'damage' : 50, 'mana_cost' : 25, 'velocity': 40, 'restoration' : 0},
             }
         }
         

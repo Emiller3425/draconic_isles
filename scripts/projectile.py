@@ -51,7 +51,7 @@ class Projectile:
         surf.blit(img, (self.pos[0] - offset[0] - img.get_width() // 2, self.pos[1] - offset[1] - img.get_height() // 2))
 
 class FireballSpell(Projectile):
-    def __init__(self, game, pos, velocity, vertical, vertical_flip):
+    def __init__(self, game, pos, velocity, vertical, vertical_flip, damage):
         if vertical:
             super().__init__(game, 'fireballspell_vertical', (game.player.pos[0] + 8, pos[1]), velocity, size=(20, 20))
         else:
@@ -65,8 +65,8 @@ class FireballSpell(Projectile):
         self.flip = self.game.player.flip
         self.vertical_flip = vertical_flip
         self.damaged_entities = []  # List to track entities that have already taken damage
-        self.damage = 10  # Damage dealt by the fireball
-        self.explosion_damage = 10  # Damage dealt by the explosion
+        self.damage = damage  # Damage dealt by the fireball
+        self.explosion_damage = damage * 0.5  # Damage dealt by the explosion
         self.light = None
 
     def update(self):
@@ -113,7 +113,7 @@ class FireballSpell(Projectile):
                 knockback_vector = [enemy_center[0] - explosion_center[0], enemy_center[1] - explosion_center[1]]
 
                 enemy.apply_knockback(knockback_vector, knockback_strength=self.knockback_strength)
-                enemy.health -= self.explosion_damage  # Explosion deals 5 damage to enemies
+                enemy.health -= self.explosion_damage  # Explosion deals damage
                 self.damaged_entities.append(enemy)
 
         if self.game.player not in self.damaged_entities and self.game.player.damage_rect().colliderect(self.rect()):
