@@ -15,7 +15,7 @@ class UI:
         self.equipped_weapon_card = game.assets['equipped_weapon_card']
         self.equipped_spell_card = game.assets['equipped_spell_card']
         self.soul_counter_card = game.assets['soul_counter_card']
-        self.equipped_player_melee = equipped_player_weapon
+        self.equipped_player_weapon = equipped_player_weapon
         self.equipped_player_spell = equipped_player_spell
         self.grey_digits = game.assets['grey_digits']
         self.red_digits = game.assets['red_digits']
@@ -136,23 +136,23 @@ class UI:
         # Get the screen size to position the cards at the bottom left corner
         _, screen_height = surf.get_size()
 
-        # Determine the positions for the melee and spell cards
-        melee_card_position = (5, screen_height - self.equipped_weapon_card.get_height() - 5)
-        spell_card_position = (melee_card_position[0] + self.equipped_weapon_card.get_width() + 2, melee_card_position[1])
+        # Determine the positions for the weapon and spell cards
+        weapon_card_position = (5, screen_height - self.equipped_weapon_card.get_height() - 5)
+        spell_card_position = (weapon_card_position[0] + self.equipped_weapon_card.get_width() + 2, weapon_card_position[1])
 
-        # Render the equipped melee card background
-        surf.blit(self.equipped_weapon_card, melee_card_position)
+        # Render the equipped weapon card background
+        surf.blit(self.equipped_weapon_card, weapon_card_position)
 
-        # Render the equipped melee weapon on top of the melee card
-        if self.equipped_player_melee:
-            melee_image = self.game.assets.get(self.equipped_player_melee)
-            if melee_image:
-                # Center the melee weapon image on the melee card
-                melee_image_position = (
-                    melee_card_position[0] + (self.equipped_weapon_card.get_width() - melee_image.get_width()) // 2,
-                    melee_card_position[1] + (self.equipped_weapon_card.get_height() - melee_image.get_height()) // 2
+        # Render the equipped weapon weapon on top of the weapon card
+        if self.equipped_player_weapon:
+            weapon_image = self.game.assets.get(self.equipped_player_weapon)
+            if weapon_image:
+                # Center the weapon weapon image on the weapon card
+                weapon_image_position = (
+                    weapon_card_position[0] + (self.equipped_weapon_card.get_width() - weapon_image.get_width()) // 2,
+                    weapon_card_position[1] + (self.equipped_weapon_card.get_height() - weapon_image.get_height()) // 2
                 )
-                surf.blit(melee_image, melee_image_position)
+                surf.blit(weapon_image, weapon_image_position)
 
         # Render the equipped spell card background
         surf.blit(self.equipped_spell_card, spell_card_position)

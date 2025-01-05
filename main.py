@@ -20,6 +20,8 @@ from scripts.animated import Animated
 from scripts.drop import Drop
 from scripts.drop import Souls
 from scripts.chest import Chest
+from scripts.weapon import Weapon
+from scripts.spell import Spell
 
 
 class Game:
@@ -555,6 +557,8 @@ class Game:
                     pass
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE or event.key == pygame.K_i:
+                        self.ui.equipped_player_weapon = self.player.equipped_weapon.weapon_type
+                        self.ui.equipped_player_spell = self.player.equipped_spell.spell_type
                         return
                     
             pygame.display.update()
@@ -683,6 +687,8 @@ class Game:
 
         # Save file information handling
         if self.continue_save:
+            self.player.weapon_inventory = []
+            self.player.spell_inventory = []
             with open('save_files/save.json') as save_file:
                 data = json.load(save_file)
                 
@@ -692,8 +698,19 @@ class Game:
             self.player.max_mana = data['max_mana']
             self.player.souls = data['souls']
             self.player.level = data['level']
-            self.player.equipped_weapon = data['equipped_weapon']
-            self.player.equipped_spell = data['equipped_spell']
+            self.player.equipped_weapon = Weapon(self, data['equipped_weapon']['weapon_type'], data['equipped_weapon']['damage'], data['equipped_weapon']['cooldown'], data['equipped_weapon']['stamina_cost'])
+            self.player.weapon_inventory.append(self.player.equipped_weapon)
+            self.player.equipped_spell = Spell(self, data['equipped_spell']['spell_type'], data['equipped_spell']['damage'], data['equipped_spell']['mana_cost'], data['equipped_spell']['velocity'], 0)
+            self.player.spell_inventory.append(self.player.equipped_spell)
+            
+            for weapon in data['weapons_inventory']:
+                temp_weapon = Weapon(self, weapon['weapon_type'], weapon['damage'], weapon['cooldown'], weapon['stamina_cost'])
+                self.player.weapon_inventory.append(temp_weapon)
+
+            for spell in data['spells_inventory']:
+                temp_spell  = Spell(self, spell['spell_type'], spell['damage'], spell['mana_cost'], spell['velocity'], 0)
+                self.player.spell_inventory.append(temp_spell)
+
             self.player.spawn_point = data['spawn_point']
             self.player.pos = self.player.spawn_point.copy()
             # Update Map Data based on JSON
@@ -923,6 +940,10 @@ class Game:
                         if len(self.player.nearby_chest_objects) > 0:
                             self.player.open_chest()
                     if event.key == pygame.K_i:
+                        self.movement_x[0] = False
+                        self.movement_x[1] = False
+                        self.movement_y[0] = False
+                        self.movement_y[1] = False
                         self.inventory_screen()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:

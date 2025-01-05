@@ -184,9 +184,9 @@ class Player(PhysicsEntity):
         self.is_melee_attacking = False
         self.nearby_bonfires = []
         self.nearby_bonfire_objects = []
-        self.weapon_inventory = [Weapon(self.game, 'basic_sword', 10, 30, 10),Weapon(self.game, 'basic_sword', 40, 30, 10),]
+        self.weapon_inventory = [Weapon(self.game, 'basic_sword', 10, 30, 10),]
         self.equipped_weapon = self.weapon_inventory[0]
-        self.spell_inventory = [Spell(self.game, 'fireball', 20, 10, 2, 0),Spell(self.game, 'fireball', 40, 10, 2, 0),]
+        self.spell_inventory = [Spell(self.game, 'fireball', 20, 10, 2, 0),]
         self.equipped_spell = self.spell_inventory[0]
 
         self.stamina_recovery_start = None
@@ -231,14 +231,33 @@ class Player(PhysicsEntity):
                 if chest.is_opened:
                     open_chests[self.game.tilemap.current_level].append((chest.pos[0], chest.pos[1]))
 
+            # Equipped weapon to dict
+            self.equipped_weapon_data = self.equipped_weapon.to_dict()
+
+            # equipped spell to dict
+            self.equipped_spell_data = self.equipped_spell.to_dict()
+
+            # non-equipped weapons to dict
+            weapons = []
+            for weapon in self.weapon_inventory:
+                if weapon is not self.equipped_weapon:
+                    weapons.append(weapon.to_dict())
+            # non-equipped spells to dict 
+            spells = []
+            for spell in self.spell_inventory:
+                if spell is not self.equipped_spell:
+                    spells.append(spell.to_dict())
+
             # Information to save into JSON file
             data = {
             'max_health' : self.max_health,
             'max_stamina' : self.max_stamina,
             'max_mana' : self.max_mana,
             'souls' : self.souls,
-            'equipped_weapon' : self.equipped_weapon.weapon_type,
-            'equipped_spell' : self.equipped_spell.spell_type,
+            'equipped_weapon' : self.equipped_weapon_data,
+            'weapons_inventory' : weapons,
+            'equipped_spell' : self.equipped_spell_data,
+            'spells_inventory' : spells,
             'spawn_point' : self.spawn_point,
             'level' : self.level,
             'open_chests' : open_chests,

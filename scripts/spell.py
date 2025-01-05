@@ -9,3 +9,11 @@ class Spell():
         self.mana_cost = mana_cost
         self.velocity = velocity
         self.restoration = restoration
+
+    def to_dict(self):
+        return {
+            'spell_type' : self.spell_type,
+            'damage' : self.damage,
+            'mana_cost' : self.mana_cost,
+            'velocity' : self.velocity
+        }
