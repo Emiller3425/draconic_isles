@@ -184,9 +184,9 @@ class Player(PhysicsEntity):
         self.is_melee_attacking = False
         self.nearby_bonfires = []
         self.nearby_bonfire_objects = []
-        self.weapon_inventory = [Weapon(self.game, 'basic_sword', 10, 30, 10),]
+        self.weapon_inventory = [Weapon(self.game, 'basic_sword', 5, 30, 10),]
         self.equipped_weapon = self.weapon_inventory[0]
-        self.spell_inventory = [Spell(self.game, 'fireball', 20, 10, 2, 0),]
+        self.spell_inventory = [Spell(self.game, 'fireball', 10, 10, 2, 0),]
         self.equipped_spell = self.spell_inventory[0]
 
         self.stamina_recovery_start = None

@@ -27,11 +27,12 @@ class Chest:
         # holds data of all potential drops in the game, TODO may need to add image field to hold the image of the item whend ropped
         self.potential_drops = {
             'weapons' : {
-                'basic_sword' : {'damage' : 30, 'cooldown' : 30, 'stamina_cost' : 10,}
+                'basic_sword' : {'damage' : random.randint(5,10), 'cooldown' : 30, 'stamina_cost' : 10,},
+                'heavy_sword' : {'damage' : random.randint(12,18), 'cooldown' : 30, 'stamina_cost' : 10,},
             },
             'spells' : {
-                'fireball' : {'damage' : 40, 'mana_cost' : 10, 'velocity': 2, 'restoration' : 0},
-                'lightning' : {'damage' : 50, 'mana_cost' : 25, 'velocity': 40, 'restoration' : 0},
+                'fireball' : {'damage' : random.randint(10,20), 'mana_cost' : 10, 'velocity': 2, 'restoration' : 0},
+                'lightning' : {'damage' : random.randint(25, 35), 'mana_cost' : 25, 'velocity': 40, 'restoration' : 0},
             }
         }
 

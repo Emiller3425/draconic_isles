@@ -106,6 +106,11 @@ class Game:
             'basic_sword_vertical' : load_image('weapons/swords/basic_sword/basic_sword_vertical.png'),
             'basic_sword_horizontal' : load_image('weapons/swords/basic_sword/basic_sword_horizontal.png'),
             'basic_sword_drop' : load_image('weapons/swords/basic_sword/basic_sword_drop.png'),
+            # heavy sword
+            'heavy_sword' : load_image('weapons/swords/heavy_sword/heavy_sword.png'),
+            'heavy_sword_vertical' : load_image('weapons/swords/heavy_sword/heavy_sword_vertical.png'),
+            'heavy_sword_horizontal' : load_image('weapons/swords/heavy_sword/heavy_sword_horizontal.png'),
+            'heavy_sword_drop' : load_image('weapons/swords/heavy_sword/heavy_sword_drop.png'),
             # fireball
             'fireball' : load_image('spells/damage/fireball/fireball.png'),
             'fireball_drop' : load_image('spells/damage/fireball/fireball_drop.png'),
