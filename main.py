@@ -392,7 +392,7 @@ class Game:
                         return
                     
             pygame.display.update()
-            self.clock.tick(60)
+            self.clock.tick(100)
             await asyncio.sleep(0)
 
     async def inventory_screen(self):
@@ -580,7 +580,7 @@ class Game:
                         return
                     
             pygame.display.update()
-            self.clock.tick(60)
+            self.clock.tick(100)
             await asyncio.sleep(0)
 
     async def start_screen(self):
@@ -1008,7 +1008,7 @@ class Game:
             # Update the display
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
             pygame.display.update()
-            self.clock.tick(60)
+            self.clock.tick(100)
             await asyncio.sleep(0)
     
     def clear_movement(self):
