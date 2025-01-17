@@ -1,7 +1,6 @@
 # /// script
 # dependencies = [
-#  "pytmx",
-#  "json"
+#  "pytmx"
 # ]
 # ///
 import pygame
