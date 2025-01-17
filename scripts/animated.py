@@ -17,9 +17,19 @@ class Animated:
             
 
     def update(self):
-        self.animation.update()  # Update the animation each frame
+            if (self.pos[0] // 16 > self.game.player.pos[0] // 16 - 14 and 
+            self.pos[0] // 16 < self.game.player.pos[0] // 16 + 14 and 
+            self.pos[1] // 16 > self.game.player.pos[1] // 16 - 12 and
+            self.pos[1] // 16 < self.game.player.pos[1] // 16 + 12
+            ):
+                self.animation.update()  # Update the animation each frame
 
     def render(self, surf, offset=(0, 0)):
-        surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), 
-                  (self.pos[0] - offset[0] + self.anim_offset[0], 
-                   self.pos[1] - offset[1] + self.anim_offset[1]))
+        if (self.pos[0] // 16 > self.game.player.pos[0] // 16 - 14 and 
+            self.pos[0] // 16 < self.game.player.pos[0] // 16 + 14 and 
+            self.pos[1] // 16 > self.game.player.pos[1] // 16 - 12 and
+            self.pos[1] // 16 < self.game.player.pos[1] // 16 + 12
+            ):
+            surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), 
+                    (self.pos[0] - offset[0] + self.anim_offset[0], 
+                    self.pos[1] - offset[1] + self.anim_offset[1]))

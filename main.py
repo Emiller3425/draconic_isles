@@ -22,6 +22,7 @@ from scripts.drop import Souls
 from scripts.chest import Chest
 from scripts.weapon import Weapon
 from scripts.spell import Spell
+from scripts.multianimated import MultiAnimated
 
 
 class Game:
@@ -684,13 +685,23 @@ class Game:
                     self.animated_physics_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), frame = 0))
         # Animated objects
         for k in self.tilemap.animated_layers:
+            if k == 'lava':
+                # Gather all lava tile positions at once
+                lava_positions = self.tilemap.animated_layers['lava']['positions']
+                # Create one MultiAnimated for all lava
+                self.lava_animated = MultiAnimated(self, 'lava', lava_positions, frame=0)
+                continue
+            if k == 'water':
+                # Gather all lava tile positions at once
+                water_positions = self.tilemap.animated_layers['water']['positions']
+                # Create one MultiAnimated for all lava
+                self.water_animated = MultiAnimated(self, 'water', water_positions, frame=0)
+                continue
             for v in self.tilemap.animated_layers[k]['positions']:
                 if 'flower' in k or 'torch' in k:
                     self.animated_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), frame = random.randint(0, len(self.assets[k+'/animation'].images))))
                 else:
                     self.animated_objects.append(Animated(self, k, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), frame = 0))
-                if k == 'lava':
-                    self.lights.append(Light(self, (v[0] * self.tilemap.tile_size, v[1] * self.tilemap.tile_size), 25, [70, 20, 0]))
 
         # Save file information handling
         if self.continue_save:
@@ -725,8 +736,6 @@ class Game:
             for chest in self.chests:
                 if list(chest.pos) in data['open_chests'][self.tilemap.current_level]:
                     chest.is_opened = True
-                    
-                
                 
         elif os.path.isfile('save_files/save.json'):
              os.remove('save_files/save.json')
@@ -771,6 +780,10 @@ class Game:
             for animated in self.animated_physics_objects:
                 animated.update()
 
+            self.lava_animated.update()
+
+            self.water_animated.update()
+
             for drop in self.drops:
                 drop.update()
                 # Add particle spawner if it's souls
@@ -789,7 +802,7 @@ class Game:
             for tile in self.all_tiles:
                 tile_pos = (tile['pos'][0] * self.tilemap.tile_size, tile['pos'][1] * self.tilemap.tile_size)
                 self.render_order_objects.append((tile, tile_pos[1]))
-            
+                
             # Add tiles to always be rendered first to list
             for tile in self.non_ordered_tiles:
                 tile_pos = (tile['pos'][0] * self.tilemap.tile_size, tile['pos'][1] * self.tilemap.tile_size)
@@ -832,6 +845,10 @@ class Game:
             for obj, _ in self.render_objects:
                 if obj['type'] != 'bridge':
                     self.tilemap.render_tile(self.display, obj, offset=render_scroll)
+
+            self.lava_animated.render(self.display, offset=render_scroll)
+
+            self.water_animated.render(self.display, offset=render_scroll)
 
             # render animated objects
             for animated in self.animated_objects:
@@ -943,14 +960,12 @@ class Game:
                         self.player.cast_spell()
                     if event.key == pygame.K_f:
                         if len(self.player.nearby_bonfire_objects)  >  0:
+                            self.clear_movement()
                             self.player.rest_at_bonfire()
                         if len(self.player.nearby_chest_objects) > 0:
                             self.player.open_chest()
                     if event.key == pygame.K_i:
-                        self.movement_x[0] = False
-                        self.movement_x[1] = False
-                        self.movement_y[0] = False
-                        self.movement_y[1] = False
+                        self.clear_movement()
                         self.inventory_screen()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
@@ -967,6 +982,12 @@ class Game:
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
             pygame.display.update()
             self.clock.tick(60)
+    
+    def clear_movement(self):
+        self.movement_x[0] = False
+        self.movement_x[1] = False
+        self.movement_y[0] = False
+        self.movement_y[1] = False
 
 
 Game().run()

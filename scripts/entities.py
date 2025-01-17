@@ -219,10 +219,6 @@ class Player(PhysicsEntity):
             self.stamina = self.max_stamina
             self.mana = self.max_mana
             self.is_facing = 'down'
-            self.game.movement_x[0] = False
-            self.game.movement_x[1] = False
-            self.game.movement_y[0] = False
-            self.game.movement_y[1] = False
             self.set_action('idle_down')
             
             # Save open chests

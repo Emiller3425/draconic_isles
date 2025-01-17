@@ -122,8 +122,8 @@ class Tilemap:
 
     def load(self):
         # Load the map tilemap
-        self.tmx_data = pytmx.load_pygame('./levels/test_level_2/test_level_2.tmx')
-        self.current_level = 'test_level_2'
+        self.tmx_data = pytmx.load_pygame('./levels/test_level_3/test_level_3.tmx')
+        self.current_level = 'test_level_3'
 
         # create dictionary with key = layer names and values an array on integers in the data
         for layer_index, layer in enumerate(self.tmx_data.visible_layers):
@@ -182,25 +182,29 @@ class Tilemap:
         animated_variants = self.get_top_left_most_variants(self.temp_animated_layers)
         
         for k1 in self.temp_object_layers:
-            for k2 in physics_variants:
-                if k1 == k2:
-                    for i in range(0, len(self.temp_object_layers[k1]['variants'])):
-                        if physics_variants[k2][0] == self.temp_object_layers[k1]['variants'][i]:
-                            self.object_layers[k1]['positions'].append(self.temp_object_layers[k1]['positions'][i])
+            if physics_variants is not None:
+                for k2 in physics_variants:
+                    if k1 == k2:
+                        for i in range(0, len(self.temp_object_layers[k1]['variants'])):
+                            if physics_variants[k2][0] == self.temp_object_layers[k1]['variants'][i]:
+                                self.object_layers[k1]['positions'].append(self.temp_object_layers[k1]['positions'][i])
         
         for k1 in self.temp_animated_layers:
-            for k2 in animated_variants:
-                if k1 == k2:
-                    for i in range(0, len(self.temp_animated_layers[k1]['variants'])):
-                        if animated_variants[k2][0] == self.temp_animated_layers[k1]['variants'][i]:
-                            self.animated_layers[k1]['positions'].append(self.temp_animated_layers[k1]['positions'][i])
-        
+            if animated_variants is not None:
+                for k2 in animated_variants:
+                    if k1 == k2:
+                        for i in range(0, len(self.temp_animated_layers[k1]['variants'])):
+                            if animated_variants[k2][0] == self.temp_animated_layers[k1]['variants'][i]:
+                                self.animated_layers[k1]['positions'].append(self.temp_animated_layers[k1]['positions'][i])
+            
     def get_top_left_most_variants(self, dict):
         top_left_positions = {}
         top_left_variants = {}
         for k in dict:
             top_left_pos = None
             for v in dict[k]:
+                if len(dict[k][v]) == 0:
+                    continue
                 if v != 'variants':
                         for i in dict[k][v]:
                             if top_left_pos == None:
@@ -463,7 +467,7 @@ class Tilemap:
 
         # Tiles and variants to render over the plyer
         deferred_tiles = None # tile_type == 'tree' and variant in [0, 1]
-
+        
         # Render all non-deferred tiles
         if not deferred_tiles and tile_type not in self.object_layers and tile_type not in self.animated_layers:
             # Only render tiles within the screen bounds

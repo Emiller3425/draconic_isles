@@ -6,19 +6,27 @@
     "activeFile": "",
     "expandedProjectPaths": [
     ],
+    "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
+        "../test_level_2/tilesheet_2.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
         "/Users/emiller3425/pygame/draconic_isles/graphics/levels/test_sheet.tsx": {
             "scaleInDock": 1
         }
     },
     "last.imagePath": "/Users/emiller3425/pygame/draconic_isles/graphics",
+    "map.height": 7,
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
+    "map.width": 70,
     "openFiles": [
     ],
     "project": "untitled.tiled-project",
     "recentFiles": [
+        "../test_level_2/tilesheet_2.tsx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {

@@ -1,0 +1,29 @@
+{
+    "activeFile": "test_level_3.tmx",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "test_level_3.tmx": {
+            "scale": 1.2466,
+            "selectedLayer": 3,
+            "viewCenter": {
+                "x": 744.4248355527034,
+                "y": 603.6419059842773
+            }
+        },
+        "tileset.tsx": {
+            "scaleInDock": 2.2699,
+            "scaleInEditor": 1
+        }
+    },
+    "map.lastUsedFormat": "tmx",
+    "openFiles": [
+        "test_level_3.tmx",
+        "tileset.tsx"
+    ],
+    "project": "untitled.tiled-project",
+    "recentFiles": [
+        "tileset.tsx",
+        "test_level_3.tmx"
+    ]
+}
