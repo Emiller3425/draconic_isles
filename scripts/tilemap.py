@@ -11,7 +11,8 @@ NEIGHBORS_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1
 PHYSICS_TILE_TYPES = {
     'torch',
     'walls', 
-    'bush', 
+    'bush',
+    'rock',
     'light', 
     'tree',
     'bonfire',
@@ -33,6 +34,9 @@ PHYSICS_TILE_HITBOXES = {
         5: (16, 16),
     },
     'bush': {
+        0: (12, 12),
+    },
+    'rock': {
         0: (12, 12),
     },
     'light': {
@@ -79,7 +83,6 @@ NEGATE_PHYSICS_LAYERS = {
 NON_ORDER_TILES = {
     'ground',
     'bridge',
-    'rock',
     }
 
 # INTRERACTABLE_TILE_TYPES = {'ladder'}
