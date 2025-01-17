@@ -1,16 +1,17 @@
 import pygame
 import random
-import asyncio
 import sys
 import json
-import numpy as np
 from collections import deque
+
 
 from scripts.drop import Drop, Souls
 from scripts.tilemap import Tilemap
 from scripts.weapon import Weapon
 from scripts.spell import Spell
 from scripts.projectile import Projectile, FireballSpell
+
+import asyncio
 
 
 class PhysicsEntity:
@@ -211,7 +212,7 @@ class Player(PhysicsEntity):
         chest.drop_items()
 
 
-    def rest_at_bonfire(self):
+    async def rest_at_bonfire(self):
         if len(self.nearby_bonfires) > 0:
             self.spawn_point = [self.nearby_bonfire_objects[0].pos[0] + 8, self.nearby_bonfire_objects[0].pos[1] + 32]
             self.pos = self.spawn_point.copy()
@@ -266,7 +267,8 @@ class Player(PhysicsEntity):
             # trigger upgrade screen gameloop
             self.game.reset_enemies()
             self.game.fade_out()
-            self.game.upgrade_screen()
+            await self.game.upgrade_screen()
+            await asyncio.sleep(0)
     
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
 

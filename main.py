@@ -1,10 +1,15 @@
+# /// script
+# dependencies = [
+#  "pytmx",
+#  "json"
+# ]
+# ///
 import pygame
 import sys
 import random
 import math
 import json
 import os
-
 from scripts.entities import PhysicsEntity, Player, Enemy
 from scripts.utils import load_image, load_images, Animation
 from scripts.tilemap import Tilemap
@@ -23,6 +28,9 @@ from scripts.chest import Chest
 from scripts.weapon import Weapon
 from scripts.spell import Spell
 from scripts.multianimated import MultiAnimated
+
+import asyncio
+
 
 
 class Game:
@@ -184,12 +192,13 @@ class Game:
     #     self.flash_duration = duration
     #     self.flash_alpha = 150  # Maximum opacity at the start
 
-    def run(self):
+    async def run(self):
         while True:
             if self.show_start_screen:
-                self.start_screen() 
+                await self.start_screen() 
             else:
-                self.main()
+                await self.main()
+            await asyncio.sleep(0)
 
     # Handles all logic in the start screen when the game is initially booted up
     def reset_enemies(self):
@@ -205,7 +214,7 @@ class Game:
         pass
 
     # TODO: Add general pause screen when at bonfires to enable fast travel
-    def upgrade_screen(self):
+    async def upgrade_screen(self):
 
         current_level = self.player.level
         current_souls = self.player.souls
@@ -385,8 +394,9 @@ class Game:
                     
             pygame.display.update()
             self.clock.tick(60)
+            await asyncio.sleep(0)
 
-    def inventory_screen(self):
+    async def inventory_screen(self):
         # Equipped Rects
         equipped_weapon_rect = pygame.Rect(136, 144, 107, 112)
         equipped_spell_rect = pygame.Rect(136, 352, 107, 112)
@@ -463,6 +473,7 @@ class Game:
                         non_equipped_weapon_rects.append(pygame.Rect(271 + inventory_render_x_offset, 144 + inventory_render_y_offset, 43, 46))
                     inventory_render_x_offset += 54
                     non_equipped_weapons_count += 1
+        
 
             # Spells
             inventory_render_x_offset = 0
@@ -571,8 +582,9 @@ class Game:
                     
             pygame.display.update()
             self.clock.tick(60)
+            await asyncio.sleep(0)
 
-    def start_screen(self):
+    async def start_screen(self):
         self.screen.fill((0, 0, 0))
 
         self.screen.blit(pygame.transform.scale(self.assets['title_screen'], self.screen.get_size()), (0,0))
@@ -585,6 +597,9 @@ class Game:
         self.screen.blit(self.assets['continue_button'], (self.screen.get_width() // 2 - self.assets['continue_button'].get_width() // 2, 450))
         continue_rect = pygame.Rect(self.screen.get_width() // 2 - self.assets['continue_button'].get_width() // 2, 450, self.assets['continue_button'].get_width(), self.assets['continue_button'].get_height())
 
+        with open('save_files/save.json') as save_file:
+            save_data = json.load(save_file)
+
         pygame.display.update()
 
         while True:
@@ -594,7 +609,7 @@ class Game:
                 self.screen.blit(self.assets['new_game_button_hover'], (self.screen.get_width() // 2 - self.assets['new_game_button_hover'].get_width() // 2, 400))
             else:
                 self.screen.blit(self.assets['new_game_button'], (self.screen.get_width() // 2 - self.assets['new_game_button'].get_width() // 2, 400))
-            if os.path.isfile('save_files/save.json'):
+            if save_data['max_health'] is not None:
                 if continue_rect.collidepoint(cursor_pos):
                     self.screen.blit(self.assets['continue_button_hover'], (self.screen.get_width() // 2 - self.assets['continue_button_hover'].get_width() // 2, 450))
                 else:
@@ -615,14 +630,14 @@ class Game:
                         self.show_start_screen = False
                         self.continue_save = True
                         return
-                    
-            self.animation.update()
-                    
+        
+            self.animation.update()                
             pygame.display.update()
-            self.clock.tick(60)
+            await asyncio.sleep(0)
 
 
-    def main(self):
+
+    async def main(self):
         # Initialize tilemap
         self.tilemap = Tilemap(self, tile_size=16)
         self.tilemap.load()
@@ -738,8 +753,21 @@ class Game:
                     chest.is_opened = True
                 
         elif os.path.isfile('save_files/save.json'):
-             os.remove('save_files/save.json')
-
+             data = {
+            'max_health' : None,
+            'max_stamina' : None,
+            'max_mana' : None,
+            'souls' : None,
+            'equipped_weapon' : None,
+            'weapons_inventory' : None,
+            'equipped_spell' : None,
+            'spells_inventory' : None,
+            'spawn_point' : None,
+            'level' : None,
+            'open_chests' : None,
+            }
+             with open('save_files/save.json', 'w') as save_file:
+                 json.dump(data, save_file)
 
         self.ui = UI(self, self.player, self.player.equipped_weapon.weapon_type, self.player.equipped_spell.spell_type)
 
@@ -961,12 +989,12 @@ class Game:
                     if event.key == pygame.K_f:
                         if len(self.player.nearby_bonfire_objects)  >  0:
                             self.clear_movement()
-                            self.player.rest_at_bonfire()
+                            await self.player.rest_at_bonfire()
                         if len(self.player.nearby_chest_objects) > 0:
                             self.player.open_chest()
                     if event.key == pygame.K_i:
                         self.clear_movement()
-                        self.inventory_screen()
+                        await self.inventory_screen()
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
                         self.movement_x[0] = False
@@ -982,6 +1010,7 @@ class Game:
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
             pygame.display.update()
             self.clock.tick(60)
+            await asyncio.sleep(0)
     
     def clear_movement(self):
         self.movement_x[0] = False
@@ -990,4 +1019,4 @@ class Game:
         self.movement_y[1] = False
 
 
-Game().run()
+asyncio.run(Game().run())

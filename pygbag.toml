@@ -1,0 +1,11 @@
+[build]
+name = "ninja_platformer"
+version = "0.1.0"
+entrypoint = "main.py"
+
+[package]
+requirements = ["pytmx"]
+
+[server]
+host = "localhost"
+port = 8000
