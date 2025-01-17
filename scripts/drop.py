@@ -27,7 +27,7 @@ class Drop:
             },
             'spells' : {
                 'fireball' : {'damage' : random.randint(10,20), 'mana_cost' : 10, 'velocity': 2, 'restoration' : 0},
-                'lightning' : {'damage' : random.randint(25, 35), 'mana_cost' : 25, 'velocity': 40, 'restoration' : 0},
+                # 'lightning' : {'damage' : random.randint(25, 35), 'mana_cost' : 25, 'velocity': 40, 'restoration' : 0},
             }
         }
         

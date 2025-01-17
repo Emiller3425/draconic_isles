@@ -268,7 +268,7 @@ class Player(PhysicsEntity):
             self.game.reset_enemies()
             self.game.fade_out()
             await self.game.upgrade_screen()
-            await asyncio.sleep(0)
+            
     
     def update(self, movement_x=(0, 0), movement_y=(0, 0)):
 
